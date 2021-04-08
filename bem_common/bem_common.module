@@ -1,0 +1,331 @@
+<?php
+/**
+ * @File Global methods
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD
+ * @info This module contains functions that could be user between modules
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Get image/file url from fid
+ * @param null $fid
+ * @return bool|string
+ */
+function bem_common_getimg($fid = NULL) {
+  $url = '';
+  if ($fid) {
+    // Get url from image
+    $file = file_load($fid);
+    $uri  = $file->uri;
+    $url  = file_create_url($uri);
+  } // end if
+
+  return $url;
+}
+
+/**
+ * Change the status to permanent of admin files
+ * @param array $admin
+ *   $admin['module'] => String with module name
+ *   $admin['files']  => Array with files names of variable temp
+ * @return boolean
+ */
+function bem_common_fileperm($admin) {
+  $status = FALSE;
+
+  try{
+    foreach ($admin['files'] as $file) {
+      $fid = variable_get($file, '');
+      if (isset($fid) && !empty($fid)) {
+        $file = file_load($fid);
+        if ($file->status == 0) {
+          $file->status = FILE_STATUS_PERMANENT;
+          file_save($file);
+          file_usage_add($file, $admin['module'], $admin['module'], 1);
+        }//end if
+      }//end if
+    }//end foreach
+    $status = TRUE;
+  }catch( Exception $e){
+    $error = $e->getMessage;
+    watchdog('BEM - Admin Permanent Files ', 'Error message :%message', array('%message' => $error) );
+  }//end try
+
+  return $status;
+}
+
+/**
+ * Return vocabulary ID by name
+ *
+ * @param string $vocabulary_name
+ */
+function bem_common_vocabularyID($vocabulary_name = '') {
+    $vid = NULL;
+    if (empty($vocabulary_name)) {
+        return $vid;
+    } // end if
+
+    try {
+        $vid = db_select('taxonomy_vocabulary', 'tv')
+            ->fields('tv', array('vid'))
+            ->condition('tv.machine_name', $vocabulary_name, '=')
+            ->execute()->fetchField();
+    } catch (Exception $e) {
+    } // end try - catch
+
+    return $vid;
+}
+
+/**
+ * @param null $dev_ip
+ */
+function bem_common_ip_user($dev_ip = NULL) {
+    $country_code = FALSE;
+    $ip = ($dev_ip) ? $dev_ip : ip_address();
+    $country_code = ip2country_get_country($ip);
+    if($country_code!=FALSE){
+        $ip_data = [
+            'country_code' => $country_code,
+        ];
+    }
+    else{
+        $ip_data['error'] = t('No encontrado, mostrando país por default.');
+
+    }
+    // try {
+    //     if(empty($_SESSION['ip_data']) || !isset($_SESSION['ip_data'])){
+    //         $ch = curl_init();
+    //         $url = sprintf('https://www.iplocate.io/api/lookup/%s', $ip_address);
+    //         Curl_setopt($ch,CURLOPT_URL,$url);
+    //         Curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+    //         $response = curl_exec($ch);
+    //         Curl_close($ch);
+    //         $content = json_decode($response);
+    //         $ip_data = [
+    //             'country' => $content->country,
+    //             'country_code' => $content->country_code,
+    //         ];
+    //         $_SESSION['ip_data'] = $ip_data;
+    //     }
+    //     else{
+    //         $ip_data = $_SESSION['ip_data'];
+    //     }
+    // } catch (Exception $e) {
+    //     $ip_data['error'] = t('No encontrado, mostrando país por default.');
+    // } // end try - catch
+    return $ip_data;
+}
+
+/**
+ * @param int $limit_year
+ */
+function bem_common_anios($limit_year = 2000, $max_year = NULL) {
+    $years_data = [];
+
+    $current_year = ($max_year) ? $max_year : date('Y');
+    for ($limit_year; $limit_year<=$current_year; $limit_year++) {
+        $years_data[] = ["id" => $limit_year, "label" => $limit_year];
+    } // end foreach
+
+    return array_reverse($years_data);
+}
+
+/**
+ * @param $alias
+ */
+function bem_common_get_nid_by_alias($alias) {
+    if (empty($alias)) {
+        return;
+    } // end if
+
+    $path = drupal_lookup_path("source", $alias);
+    $node = menu_get_object("node", 1, $path);
+
+    return $node;
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_common_menu() {
+    $items = [];
+
+    // Terminos y condiciones
+    /* General block to adimin modules of section */
+    $items['admin/config/terminos'] = array(
+        'title' => 'BEM V2.0 | Términos y Condiciones',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/terminos/trust'] = array(
+        'title'            => 'Configuración | Términos y condiciones',
+        'description'      => 'Configuración de banners de Términos y condiciones',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_terminos_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Configuracion de paginas
+    $items['admin/config/pages/trust'] = array(
+        'title' => 'BEM V2.0 | Configuración de páginas',
+        'description' => 'Configuración de páginas',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_paginas_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.paginas.admin.inc',
+    );
+
+    // 404 - Not found
+    /* General block to adimin modules of section */
+    $items['admin/config/not_found'] = array(
+        'title' => 'BEM V2.0 | 404 - No encontrado',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/not_found/trust'] = array(
+        'title'            => 'Configuración | 404 - No encontrado',
+        'description'      => 'Configuración de banners 404 - No encontrado',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_bem_not_found_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Busqueda
+    /* General block to adimin modules of section */
+    $items['admin/config/busqueda'] = array(
+        'title' => 'BEM V2.0 | Búsqueda',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/busqueda/trust'] = array(
+        'title'            => 'Configuración | Búsqueda',
+        'description'      => 'Configuración de banners de Búsqueda',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_bem_busqueda_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Mapa de Sitio
+    /* General block to adimin modules of section */
+    $items['admin/config/mapa_sitio'] = array(
+        'title' => 'BEM V2.0 | Mapa de Sitio',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/mapa_sitio/trust'] = array(
+        'title'            => 'Configuración | Mapa de Sitio',
+        'description'      => 'Configuración de banners de Mapa de Sitio',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_mapa_sitio_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Accesibilidad
+    /* General block to adimin modules of section */
+    $items['admin/config/accesibilidad'] = array(
+        'title' => 'BEM V2.0 | Accesibilidad',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/accesibilidad/trust'] = array(
+        'title'            => 'Configuración | Accesibilidad',
+        'description'      => 'Configuración de banners de Accesibilidad',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_accesibilidad_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Cotizador
+    /* General block to adimin modules of section */
+    $items['admin/config/cotizador'] = array(
+        'title' => 'BEM V2.0 | Cotizador',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/cotizador/trust'] = array(
+        'title'            => 'Configuración | Cotizador',
+        'description'      => 'Configuración de banners de Cotizador',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_cotizador_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Politicas de privacidad
+    /* General block to adimin modules of section */
+    $items['admin/config/politicas'] = array(
+        'title' => 'BEM V2.0 | Políticas de Privacidad',
+        'description' => 'Panel de configuración de Redesign - Modules',
+        'page callback' => 'system_admin_menu_block_page',
+        'position' => 'right',
+        'access arguments' => array('growcompany '),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+        'weight' => 3,
+    );
+    /* Default administer path */
+    $items['admin/config/politicas/trust'] = array(
+        'title'            => 'Configuración | Políticas de Privacidad',
+        'description'      => 'Configuración de banners de Políticas de Privacidad',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_politicas_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    // Default admin path
+    $items['admin/config/cm/banner'] = array(
+        'title'            => 'Configuración de Banner | Creador Mensajes',
+        'description'      => '',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_common_banner_creador_admin'),
+        'access arguments' => array('growcompany '),
+        'file'             => '/admin/common.terminos.admin.inc',
+    );
+
+    return $items;
+}

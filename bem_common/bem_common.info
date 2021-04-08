@@ -1,5 +1,5 @@
 name = Common Helper
 description = Function used to help between modules.
 package = 'BP - SALUD'
-version = 1.0
+version = 1.0.0
 core = 7.x
