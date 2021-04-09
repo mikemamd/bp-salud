@@ -1,0 +1,59 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to Home Blocks.
+ * @tmpvariables
+ *   [tools_title]
+ *   [tools_desc]
+ *   [tools_link_txt]
+ *   [tools_link]
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install taxonomies and insert fields
+ * @taxonomies
+ *   home_tools  => Menu home tools
+ */
+function bem_home_install(){
+  // Create a new taxonomy to menu of site
+  taxonomy_vocabulary_save((object) array(
+    'name'         => 'Home - Herramientas',
+    'machine_name' => 'home_tools',
+    'description'  => 'Vocabulario para menú de sección herramientas de home',
+    'module'       => 'bem_home',
+  ));
+
+  // Add field on taxonomy
+  field_info_cache_clear();
+  $field = [
+    'entity_type' => 'taxonomy_term',
+    'bundle'      => 'home_tools',
+    'field_name'  => 'field_icon_class',
+    'label'       => 'Icon Class',
+    'description' => 'Clase CSS para ícono de front-end',
+    'required'    => TRUE,
+    'widget'      => array(
+      'type' => 'text',
+    ),
+  ];
+
+  field_create_instance($field);
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete taxonomy related with the module
+ */
+function bem_home_uninstall() {
+  // Load taxonomy
+  $voc_id = taxonomy_vocabulary_machine_name_load('home_tools');
+  taxonomy_vocabulary_delete($voc_id->vid);
+  field_purge_batch(1000);
+
+  // Delete temporal variables
+  variable_del('tools_title');
+  variable_del('tools_desc');
+  variable_del('tools_link_txt');
+  variable_del('tools_link');
+}

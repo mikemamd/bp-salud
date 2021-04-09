@@ -1,0 +1,333 @@
+<?php
+/**
+ * @File Redesign Home
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD
+ * @info This module contains functions to blocks on new home page
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_home_permission() {
+  return array(
+    'home admin' => array(
+      'title' => 'Administración de bloques en Home',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_home_menu() {
+  $items = [];
+  /* Default administer path */
+  $items['admin/config/redesign/home/config'] = array(
+    'title'            => 'Configuración | Bloques Home',
+    'description'      => 'Configuración de bloques en Home',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_home_admin'),
+    'access arguments' => array('home admin'),
+    'file'             => 'bem_home.admin.inc',
+  );
+  /* Admin Paths */
+  $items['admin/config/redesign/home/settings'] = array(
+    'title'            => 'Home Config',
+    'description'      => 'Configuración de bloques en Home',
+    'access arguments' => array('creator tools'),
+    'file'             => 'message_creator.admin.inc',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => 1,
+  );
+  return $items;
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ */
+function bem_home_block_info() {
+  $blocks = [];
+  $blocks['bem_home_slider'] = array(
+    'info'       => 'Home - Slider principal',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => '<front>',
+    'weight'     => 2,
+  );
+  $blocks['bem_home_tools'] = array(
+    'info'       => 'Home - Menu Herramientas',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => '<front>',
+    'weight'     => 3,
+  );
+  $blocks['bem_home_cse'] = array(
+    'info'       => 'Home - Crezca su empresa',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => '<front>',
+    'weight'     => 4,
+  );
+  $blocks['bem_home_rewards'] = array(
+    'info'       => 'Home - Rewards',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => '<front>',
+    'weight'     => 5,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_home_block_view($delta = '') {
+  $block = [];
+  switch ($delta) {
+    case 'bem_home_slider':
+        $block['content'] = bem_home_get_slider();
+      break;
+    case 'bem_home_tools':
+        $block['content'] = bem_home_get_tools();
+      break;
+    case 'bem_home_cse':
+        $block['content'] = bem_home_get_cse();
+      break;
+    case 'bem_home_rewards':
+        $block['content'] = bem_home_get_rewards();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_home_theme() {
+  $theme = [];
+  $theme['bem_home_slider']   = [ 'template' => 'templates/block-slider' ];
+  $theme['bem_home_tools']    = [ 'template' => 'templates/block-tools' ];
+  $theme['bem_home_cse']      = [ 'template' => 'templates/block-cse' ];
+  $theme['bem_home_rewards']  = [ 'template' => 'templates/block-rewards' ];
+
+  return $theme;
+}
+
+/**
+ * Return content to block [bem_home_slider]
+ * @return theme array ($content)
+ */
+function bem_home_get_slider() {
+  $content = [];
+  $query = db_select('node', 'n');
+  $query->leftJoin('field_data_body','fb','fb.entity_id = n.nid');
+  $query->leftJoin('field_data_field_posicion','fp','fp.entity_id = n.nid');
+  $query->leftJoin('field_data_field_image','fi','fi.entity_id = n.nid');
+  $query->leftJoin('field_data_field_image_mobile','fim','fim.entity_id = n.nid');
+  $query->leftJoin('field_data_field_video_background', 'yt', 'yt.entity_id = n.nid');
+  $query->leftJoin('field_data_field_link', 'flink', 'flink.entity_id = n.nid');
+  $query->leftJoin('field_data_field_uorder', 'fuo', 'fuo.entity_id = n.nid');
+  $query->condition('n.type', 'slide_home');
+  $query->condition('n.status', 1);
+  $query->fields('n', ['nid', 'title'])
+        ->fields('fb', ['body_value'])
+        ->fields('fp', ['field_posicion_value'])
+        ->fields('flink', ['field_link_url'])
+        ->fields('fi', ['field_image_fid'])
+        ->fields('fim', ['field_image_mobile_fid'])
+        ->fields('yt', ['field_video_background_input'])
+        ->fields('fuo', ['field_uorder_value']);
+  $query->orderBy('fuo.field_uorder_value', 'ASC');
+  $results = $query->execute()->fetchAll();
+
+  if ( !empty($results) ) {
+    foreach ($results as $result) {
+      $content[] = [
+        'nid'      => $result->nid,
+        'title'    => $result->title,
+        'body'     => $result->body_value,
+        'position' => $result->field_posicion_value,
+        'orden'    => $result->field_uorder_value,
+        'act'      => ($result->field_uorder_value == 1) ? 'active' : '',
+        'img_m'    => bem_common_getimg($result->field_image_fid),
+        'img_d'    => bem_common_getimg($result->field_image_mobile_fid),
+        'video'    => $result->field_video_background_input,
+        'url' => $result->field_link_url,
+      ];
+    }//endforeach
+  }//endif
+  if(isset($_SESSION['redirect_private_nodeid'])){
+    $content['redirect_private_nodeid'] = $_SESSION['redirect_private_nodeid'];
+    unset($_SESSION['redirect_private_nodeid']);
+  }
+  return theme('bem_home_slider', array('content' => $content));
+}
+
+/**
+ * Return content to block [bem_home_tools]
+ * @return theme array ($content)
+ */
+function bem_home_get_tools() {
+  global $base_url;
+  $content = [];
+  $vocab   = taxonomy_vocabulary_machine_name_load('home_tools');
+  $vid     = $vocab->vid;
+
+  $content["description"] = $vocab->description;
+
+  $query = db_select('taxonomy_term_data', 'tx');
+  $query->leftJoin('field_data_field_icon_class', 'fic', 'fic.entity_id = tx.tid');
+  $query->leftJoin('field_data_field_icon_svg', 'fsvg', 'fsvg.entity_id = tx.tid');
+  $query->leftJoin('field_data_field_open_tab', 'ot', 'ot.entity_id = tx.tid');
+
+  $query->condition('tx.vid', $vid, '=');
+  $query->fields('tx', ['tid', 'name', 'description'])
+        ->fields('fic', ['field_icon_class_value'])
+        ->fields('fsvg', ['field_icon_svg_fid'])
+        ->fields('ot', ['field_open_tab_value']);
+  $query->orderBy('weight', 'ASC');
+  $results = $query->execute()->fetchAll();
+
+  if (!empty($results)) {
+    foreach ($results as $result) {
+      if($result->name == 'Cotizador'){
+        if (cotizador_ip() != NULL) {
+          $cotizador_url = cotizador_ip();
+          $cotizador_url_bandera = 1;
+        }
+        else{
+          $cotizador_url = $result->description;
+          $cotizador_url_bandera = 0;
+        }
+        $content["data"][] = [
+          'tid'    => $result->tid,
+          'name'   => $result->name,
+          'link'   => $cotizador_url,
+          'target' => ($cotizador_url_bandera==1) ? '_blank' : '',
+          'icon'   => bem_common_getimg($result->field_icon_svg_fid),
+        ];
+      }
+      else{
+        $content["data"][] = [
+          'tid'    => $result->tid,
+          'name'   => $result->name,
+          'link'   => $result->description,
+          'target' => ($result->field_open_tab_value) ? '_blank' : '',
+          'icon'   => bem_common_getimg($result->field_icon_svg_fid),
+        ];
+      }
+    }
+  }
+
+  return theme('bem_home_tools', array('content' => $content));
+}
+
+/**
+ * Return content to block [bem_home_cse]
+ * @return theme array ($content)
+ */
+function bem_home_get_cse() {
+  global $base_url;
+  $content = [];
+
+  $query = db_select('node', 'n');
+  $query->leftJoin('field_data_field_hd_descripcion_corta', 'fdc', 'fdc.entity_id = n.nid');
+  $query->leftJoin('field_data_field_hd_imagen_desktop', 'fid', 'fid.entity_id = n.nid');
+  $query->leftJoin('field_data_field_hd_imagen_mobile', 'fim', 'fim.entity_id = n.nid');
+  $query->leftJoin('field_data_field_hd_url', 'fu', 'fu.entity_id = n.nid');
+  $query->leftJoin('field_data_field_posici_n', 'fp', 'fp.entity_id = n.nid');
+  $query->condition('n.type', 'home_destacados');
+  $query->condition('n.status', 1);
+  $query->fields('n', ['nid', 'title'])
+        ->fields('fdc', ['field_hd_descripcion_corta_value'])
+        ->fields('fid', ['field_hd_imagen_desktop_fid'])
+        ->fields('fim', ['field_hd_imagen_mobile_fid'])
+        ->fields('fu', ['field_hd_url_value'])
+        ->fields('fp', ['field_posici_n_value']);
+  $query->orderBy('fp.field_posici_n_value', 'ASC');
+  $results = $query->execute()->fetchAll();
+
+  if ( !empty($results) ) {
+    foreach ($results as $result) {
+      $content['cse'][] = [
+        'nid'   => $result->nid,
+        'title' => $result->title,
+        'desc'  => $result->field_hd_descripcion_corta_value,
+        'img_d' => bem_common_getimg($result->field_hd_imagen_desktop_fid),
+        'img_m' => bem_common_getimg($result->field_hd_imagen_mobile_fid),
+        'url'   => $result->field_hd_url_value,
+        'pos'   => $result->field_posici_n_value,
+      ];
+    }//endfor
+  }//endif
+
+  //Block info
+  $content['block'] = [
+    'title'  => variable_get('tools_title', ''),
+    'desc'   => variable_get('tools_desc', ''),
+    'u_text' => variable_get('tools_link_txt', ''),
+    'url'    => $base_url . '/' . variable_get('tools_link', ''),
+  ];
+
+  return theme('bem_home_cse', array('content' => $content));
+}
+
+/**
+ * Return content to block [bem_home_rewards]
+ * @return theme array ($content)
+ */
+function bem_home_get_rewards() {
+  $content = [];
+  $query = db_select('node', 'n');
+  $query->leftJoin('field_data_body', 'fb', 'fb.entity_id = n.nid');
+  $query->leftJoin('field_data_field_asset_link', 'fal', 'fal.entity_id = n.nid');
+  $query->leftJoin('field_data_field_asset_video', 'fav', 'fav.entity_id = n.nid');
+  $query->leftJoin('field_data_field_asset_image', 'fai', 'fai.entity_id = n.nid');
+  $query->leftJoin('field_data_field_image_mobile', 'fim', 'fim.entity_id = n.nid');
+  $query->condition('n.type', 'banner_adds');
+  $query->condition('n.status', 1);
+  $query->fields('n', ['nid', 'title'])
+        ->fields('fb', ['body_value'])
+        ->fields('fal', ['field_asset_link_url'])
+        ->fields('fai', ['field_asset_image_fid'])
+        ->fields('fim', ['field_image_mobile_fid'])
+        ->fields('fav', ['field_asset_video_input']);
+  $query->orderBy('n.changed', 'DESC');
+  $results = $query->execute()->fetchAll();
+
+  if ( !empty($results) ) {
+    foreach ($results as $result) {
+      $content = [
+        'nid'   => $result->nid,
+        'title' => $result->title,
+        'desc'  => $result->body_value,
+        'img_d' => bem_common_getimg($result->field_asset_image_fid),
+        'img_m' => bem_common_getimg($result->field_image_mobile_fid),
+        'video' => $result->field_asset_video_input,
+        'link'  => $result->field_asset_link_url,
+      ];
+    }//endfor
+  }//endif
+  //
+  drupal_add_js(drupal_get_path('module', 'bem_home') . '/js/home.js', array('scope' => 'footer', 'weight' => 8));
+  return theme('bem_home_rewards', array('content' => $content));
+}
