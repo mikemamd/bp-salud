@@ -1,0 +1,186 @@
+<?php
+/**
+ * @File Redesign Library
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Oficina Móvil
+ * @info This module contains functions to blocks on Sales Guide
+ * @vertion dev 1.0.0.0
+ */
+
+//Load the service library of content
+module_load_include('inc', 'bem_library', 'bem_library.services');
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_library_permission() {
+  return array(
+    'library serv' => array(
+      'title' => 'Access to service of library',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_library_menu() {
+  $items = [];
+  /* Admin Paths */
+  $items['admin/config/mobile-office/library/config'] = array(
+    'title'            => 'Configuración | Oficina Móvil - Biblioteca',
+    'description'      => 'Configuración de bloques en Oficina Móvil | Biblioteca',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_library_admin'),
+    'access arguments' => array('mobile office'),
+    'file'             => 'bem_library.admin.inc',
+  );
+  /* Paths */
+  $items['oficina-movil/biblioteca'] = array(
+    'title'            => 'Biblioteca',
+    'description'      => 'Oficina Móvil - Biblioteca',
+    'page callback'    => 'bem_library_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_library_page_empty() {
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks
+ *   library_header
+ *   library_public_filters
+ *   library_public_results
+ *   library_docs_filters
+ *   library_docs_results
+ */
+function bem_library_block_info() {
+  $blocks = [];
+  $blocks['library_header'] = array(
+    'info'       => 'Oficina Móvil | Biblioteca - Header',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/biblioteca',
+    'weight'     => 1,
+  );
+  $blocks['library_public_results'] = array(
+    'info'       => 'Oficina Móvil | Biblioteca - Documentos Públicos Resultados',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/biblioteca',
+    'weight'     => 2,
+  );
+
+  return $blocks;
+}
+
+/*
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_library_block_view($delta = '') {
+  $block = [];
+
+  switch ($delta) {
+    case 'library_header':
+      $block['content'] = bem_library_getheader();
+      break;
+    case 'library_public_results':
+      global $base_url;
+      // Add libraries to angular integration
+      drupal_add_js(drupal_get_path('theme', 'bptheme') . '/js/angular/angular.min.js', array('scope' => 'footer', 'weight' => 6));
+      drupal_add_js(drupal_get_path('theme', 'bptheme') . '/js/angular/app/ng.main.js', array('scope' => 'footer', 'weight' => 7));
+      // Set Param
+      $country = bem_library_pubfilters();
+      foreach ($country as $key => $value) {
+        if ($value['class'] == 'selected') {
+          $filter = $key;
+        }// endif
+      }// endforeach
+      // Send params to JS
+      drupal_add_js(['library' => [ 'filter' => $filter, 'base' => $base_url . '/api/biblioteca/library'] ], 'setting');
+      drupal_add_js(drupal_get_path('module', 'bem_library') . '/js/filters.js', array('scope' => 'footer', 'weight' => 8));
+      // Block content
+      $content['info']     = bem_library_getinfo($delta);
+      $content['infopriv'] = bem_library_getinfo('library_priv_results');
+      $content['filter']   = bem_library_pubfilters();
+      $block['content']    = theme('library_public_results', array('content' => $content));
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_library_theme() {
+  $theme = [];
+
+  $theme['library_header']         = [ 'template' => 'templates/block-header' ];
+  $theme['library_public_results'] = [ 'template' => 'templates/block-public-results' ];
+
+  return $theme;
+}
+
+/**
+ * Return content to block [salesguide_header]
+ * @return theme array ($content)
+ */
+function bem_library_getheader() {
+  $content = [
+    'title' => variable_get('library_head_title',''),
+    'body'  => variable_get('library_head_body',''),
+    'video' => variable_get('library_head_video', ''),
+    'img_d' => bem_common_getimg(variable_get('library_head_imgd', '')),
+    'img_m' => bem_common_getimg(variable_get('library_head_imgm', '')),
+  ];
+
+  return theme('library_header', array('content' => $content));
+}
+
+/**
+ * Callback to return contents of service
+ * @see bem_library_block_view
+ * @param string ($delta) params to retrive drupal variables to block []
+ * @return array ($info) with content result
+ */
+function bem_library_getinfo($delta) {
+  $content = [];
+
+  // Load block info content
+  switch ($delta) {
+    case 'library_public_results':
+      $content['filter_t'] = variable_get('library_filter_title','');
+      $content['filter_d'] = variable_get('library_filter_desc', '');
+      $content['result_t'] = variable_get('library_interest_title','');
+      $content['result_d'] = variable_get('library_interest_desc', '');
+      break;
+    case 'library_priv_results':
+      $content['title'] = variable_get('library_financial_title','');
+      $content['desc']  = variable_get('library_financial_desc','');
+      break;
+   }
+
+  return $content;
+}
