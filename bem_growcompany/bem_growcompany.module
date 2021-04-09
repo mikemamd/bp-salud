@@ -1,0 +1,341 @@
+<?php
+/**
+ * @File Redesign Grow your Company
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Crece tu Empresa
+ * @info This module contains functions to blocks on section grow your company
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_growcompany_permission() {
+  return array(
+    'growcompany bp' => array(
+      'title' => 'Administración de página Crece tu Empresa',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_growcompany_menu() {
+  $items = [];
+  /* Default administer path */
+  $items['admin/config/redesign/growcompany/config'] = array(
+    'title'            => 'Configuración | Crece tu Empresa',
+    'description'      => 'Configuración de página de Conoce BP',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_growcompany_admin'),
+    'access arguments' => array('growcompany bp'),
+    'file'             => 'bem_growcompany.admin.inc',
+  );
+  /* Admin Paths */
+  $items['admin/config/redesign/growcompany/config/general'] = array(
+    'title'            => 'Admin Crece tu Empresa',
+    'description'      => 'Configuración General de Conoce BP',
+    'access arguments' => array('growcompany bp'),
+    'file'             => 'bem_growcompany.admin.inc',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => 1,
+  );
+  $items['admin/config/redesign/growcompany/config/resources'] = array(
+    'title'            => 'Recursos',
+    'description'      => 'Configuracion de bloque Recursos',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_growcompany_adminblock'),
+    'access arguments' => array('growcompany bp'),
+    'type'             => MENU_LOCAL_TASK,
+    'file'             => 'bem_growcompany.admin.inc',
+    'weight'           => 2,
+  );
+
+  /* Paths */
+  $items['crece-tu-empresa'] = array(
+    'title'            => 'Crece tu Empresa',
+    'description'      => 'Page - Crece tu empresa',
+    'page callback'    => 'bem_growcompany_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_growcompany_page_empty() {
+
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks Genels
+ *   bem_growcompany_header
+ *   bem_growcompany_intro
+ *   bem_growcompany_arts
+ */
+function bem_growcompany_block_info() {
+  $blocks = [];
+  $blocks['bem_growcompany_header'] = array(
+    'info'       => 'Crece tu empresa - General | Header',
+    'status'     => TRUE,
+    'region'     => 'header',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'crece-tu-empresa',
+    'weight'     => 1,
+  );
+  $blocks['bem_growcompany_intro'] = array(
+    'info'       => 'Crece tu empresa - General | Intro',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'crece-tu-empresa',
+    'weight'     => 1,
+  );
+  $blocks['bem_growcompany_arts'] = array(
+    'info'       => 'Crece tu empresa - General | Artículos',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'pages'      => 'crece-tu-empresa',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 2,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_growcompany_block_view($delta = '') {
+  $block = [];
+  switch ($delta) {
+    case 'bem_growcompany_header':
+      $block['content'] = bem_growcompany_gethead();
+      break;
+    case 'bem_growcompany_intro':
+      $block['content'] = bem_growcompany_getintro();
+      break;
+    case 'bem_growcompany_arts':
+      $block['content'] = bem_growcompany_getarts();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_growcompany_theme() {
+  $theme = [];
+  $theme['bem_growcompany_header'] = [ 'template' => 'templates/block-header' ];
+  $theme['bem_growcompany_intro']  = [ 'template' => 'templates/block-intro' ];
+  $theme['bem_growcompany_arts']   = [ 'template' => 'templates/block-arts' ];
+  return $theme;
+}
+
+/**
+ * Return content to block [bem_growcompany_header]
+ * @return theme array ($content)
+ */
+function bem_growcompany_gethead() {
+  $content = [];
+
+  //Block header
+  $content['header'] = [
+    'title' => variable_get('growcompany_title',''),
+    'desc'  => variable_get('growcompany_body',''),
+    'video' => variable_get('growcompany_video',''),
+    'img_d' => bem_common_getimg(variable_get('growcompany_imgdesk', '')),
+    'img_m' => bem_common_getimg(variable_get('growcompany_imgmob', '')),
+  ];
+
+  //Block resources
+  $content['resources'] = [
+    'desc' => variable_get('resources_intro',''),
+    'svg'  => bem_common_getimg(variable_get('growcompany_introsvg', '')),
+  ];
+
+
+  return theme('bem_growcompany_header', array('content' => $content));
+}
+
+/**
+ *
+ * @see "Content type" is: "Crece tu Empresa | Intro"
+ *
+ * Return content to block [bem_growcompany_intro]
+ * @return theme array ($content)
+ */
+function bem_growcompany_getintro() {
+  $content = [];
+
+  // Query to get content
+  $qry = db_select('node', 'n');
+  $qry->leftJoin('field_data_field_body',      'body', 'body.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_upath',     'path', 'path.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_uimg_desk', 'imgd', 'imgd.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_uimg_mob',  'imgm', 'imgm.entity_id = n.nid');
+  //$qry->leftJoin('field_data_field_uformat',   'frmt', 'frmt.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_uorder',    'ordr', 'ordr.entity_id = n.nid');
+  $qry->condition('n.type', 'bem_growcompany');
+  $qry->condition('n.status', 1);
+  $qry->fields('n', ['nid', 'title'])
+      ->fields('body', ['field_body_value'])
+      ->fields('path', ['field_upath_value'])
+      ->fields('imgd', ['field_uimg_desk_fid'])
+      ->fields('imgm', ['field_uimg_mob_fid'])
+      //->fields('frmt', ['field_uformat_value'])
+      ->fields('ordr', ['field_uorder_value']);
+  $qry->orderBy('ordr.field_uorder_value', 'ASC');
+  $qry->range(0,3);
+  $results = $qry->execute()->fetchAll();
+
+  if (!empty($results)) {
+    foreach ($results as $key => $node) {
+      $content[] = [
+        'order' => $node->field_uorder_value,
+        'title' => $node->title,
+        'body'  => $node->field_body_value,
+        'path'  => $node->field_upath_value,
+        'img_d' => bem_common_getimg($node->field_uimg_desk_fid),
+        'img_m' => bem_common_getimg($node->field_uimg_mob_fid),
+      ];
+    } // enforeach
+  } // endif
+
+  return theme('bem_growcompany_intro', array('content' => $content));
+}
+
+/**
+ * Return content to block [bem_growcompany_arts]
+ * Call since articles module [bem_articles_block_view]
+ * @see bem_growcompany_block_view,
+ *      bem_articles_block_view
+ * @return theme array ($content)
+ */
+function bem_growcompany_getarts($origin = NULL) {
+  global $base_url;
+  $content = [];
+  $range   = 3;
+
+  // Load info block
+  $content['block'] = [
+    'title' => variable_get('growcompany_artstitle',''),
+    'desc'  => variable_get('growcompany_artsbody',''),
+  ];
+
+  $qry = db_select('node', 'n');
+  // Globals
+  $qry->leftJoin('field_data_field_type_articles', 'type', 'type.entity_id = n.nid');
+  $qry->leftJoin('field_data_body', 'body', 'body.entity_id = n.nid');
+  $qry->leftJoin('taxonomy_term_data', 'ttd', 'ttd.tid = type.field_type_articles_tid');
+  // Documentos de interes
+  $qry->leftJoin('field_data_field_imagen_destacada', 'diimg', 'diimg.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_pdf_descargable', 'dipdf', 'dipdf.entity_id = n.nid');
+  // Conocimiento de la Industria
+  $qry->leftJoin('field_data_field_imagen_articulo_destacado', 'ciimg', 'ciimg.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_descarga_pdf_ci', 'cipdf', 'cipdf.entity_id = n.nid');
+  // Capacitaciones
+  $qry->leftJoin('field_data_field_imagen_destacada_cp', 'cpimg', 'cpimg.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_pdf_descargable_cp', 'cppdf', 'cppdf.entity_id = n.nid');
+  // Tutoriales
+  $qry->leftJoin('field_data_field_imagen_tutorial', 'tuimg', 'tuimg.entity_id = n.nid');
+  // Webinars
+  $qry->leftJoin('field_data_field_uimg_desk', 'weimg', 'weimg.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_pdf_descargable', 'wepdf', 'wepdf.entity_id = n.nid');
+  // Condition
+  $qry->condition('status', '1', '=')
+      ->condition(db_or()
+        ->condition('type', 'documentos_de_inter_s_', '=')
+        ->condition('type', 'articulo_conocimiento_industria', '=')
+        ->condition('type', 'capacitaciones', '=')
+        ->condition('type', 'tip_de_ventas', '=')
+        ->condition('type', 'articulo_general', '=')
+        ->condition('type', 'tutoriales', '=')
+        ->condition('type', 'webinars', '='));
+  if ( $origin !== NULL && $origin == 'sticky' ) {
+    $qry->condition('sticky', '1', '=');
+    $range = 100;
+  }// endif
+  // Fields
+  $qry->fields('n', ['nid', 'title', 'type', 'promote'])
+      ->fields('type', ['field_type_articles_tid'])
+      ->fields('ttd', ['tid', 'name'])
+      ->fields('body', ['body_summary'])
+      ->fields('diimg', ['field_imagen_destacada_fid'])
+      ->fields('dipdf', ['field_pdf_descargable_fid'])
+      ->fields('ciimg', ['field_imagen_articulo_destacado_fid'])
+      ->fields('cipdf', ['field_descarga_pdf_ci_fid'])
+      ->fields('cpimg', ['field_imagen_destacada_cp_fid'])
+      ->fields('cppdf', ['field_pdf_descargable_cp_fid'])
+      ->fields('tuimg', ['field_imagen_tutorial_fid'])
+      ->fields('weimg', ['field_uimg_desk_fid'])
+      ->fields('wepdf', ['field_pdf_descargable_fid']);
+  $qry->orderBy('n.changed', 'ASC');
+  $qry->range(0,$range);
+  $results = $qry->execute()->fetchAll();
+
+  // Order info results
+  if ( !empty($results)) {
+    foreach ($results as $art) {
+      $content['content'][$art->nid] = [
+        'title'      => $art->title,
+        'desc'       => $art->body_summary,
+        'type'       => $art->name,
+        'path'       => $base_url.'/'.drupal_get_path_alias('node/'.$art->nid),
+        'path_print' => $base_url . '/' . drupal_get_path_alias('node/' . $art->nid) . '#print',
+        'promote'    => $art->promote,
+      ];
+
+      switch ($art->type) {
+        case 'documentos_de_inter_s_':
+          $content['content'][$art->nid]['img'] = bem_common_getimg($art->field_imagen_destacada_fid);
+          $content['content'][$art->nid]['pdf'] = bem_common_getimg($art->field_pdf_descargable_fid);
+          break;
+        case 'articulo_conocimiento_industria':
+          $content['content'][$art->nid]['img'] = bem_common_getimg($art->field_imagen_articulo_destacado_fid);
+          $content['content'][$art->nid]['pdf'] = bem_common_getimg($art->field_descarga_pdf_ci_fid);
+          break;
+        case 'capacitaciones':
+          $content['content'][$art->nid]['img'] = bem_common_getimg($art->field_imagen_destacada_cp_fid);
+          $content['content'][$art->nid]['pdf'] = bem_common_getimg($art->field_pdf_descargable_cp_fid);
+          break;
+        case 'tutoriales':
+          $content['content'][$art->nid]['img'] = bem_common_getimg($art->field_imagen_tutorial_fid);
+          break;
+        case 'webinars':
+          $content['content'][$art->nid]['img'] = bem_common_getimg($art->field_uimg_desk_fid);
+          $content['content'][$art->nid]['pdf'] = bem_common_getimg($art->field_pdf_descargable_fid);
+          break;
+        default:
+          $content['content'][$art->nid]['img'] = bem_common_getimg($art->field_imagen_destacada_cp_fid);
+          $content['content'][$art->nid]['pdf'] = bem_common_getimg($art->field_pdf_descargable_cp_fid);
+          break;
+      }
+    }// endforeach
+  } // endif
+
+  if ( $origin !== NULL && $origin == 'sticky' ) {
+    return $content;
+  }// endif
+  else {
+    return theme('bem_growcompany_arts', array('content' => $content));
+  }
+}

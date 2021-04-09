@@ -1,0 +1,180 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to Header.
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @contenttypes
+ *   bem_growcompany => Banner to Alerts on home
+ * @create_fields
+ *   field_uformat
+ * @instances
+ *   field_body
+ *   field_upath
+ *   field_uimg_desk
+ *   field_uimg_mob
+ *   field_uorder
+ */
+function bem_growcompany_install(){
+  $order = $options = [];
+  // Array with new content
+  $content = array(
+    'type'        => 'bem_growcompany',
+    'name'        => 'Crece tu Empresa | Intro',
+    'description' => 'Use para cargar el contenido introductorio de pagina "Crece tu Empresa"',
+    'title_label' => 'Título',
+    'base'        => 'node_content',
+    'custom'      => TRUE,
+  );//end content
+  // Create a new content type
+  $node_type = node_type_set_defaults($content);
+  node_type_save($node_type);
+
+  // Create fields
+  field_info_cache_clear();
+  $fields = [
+    'position' => [ 
+      'field_name' => 'field_uformat', 
+      'type'       => 'list_integer' 
+    ],
+    'imagen_mobile' => array(
+      'field_name' => 'field_uimg_mob',
+      'type'       => 'image'
+    ),
+
+  ];
+ 
+  foreach($fields as $field) {
+    if( !field_info_field($field['field_name']) ){
+      field_create_field($field);
+    }//end if
+  }//end foreach
+  
+  // Options to format selector
+  $options = ['miniatura','completo'];
+  // Options to order selector
+  for ($i = 1; $i < 11; $i++) { 
+    $order[$i] = $i; 
+  }
+
+  // Create instances
+  $instances = array(
+    'Description' => array( 
+      'entity_type' => 'node',
+      'field_name'  => 'field_body', 
+      'label'       => 'Descripción',
+      'description' => 'Descripción del contenido',
+      'required'    => TRUE,
+      'widget'      => array(
+        'type' => 'text_textarea_with_summary'
+      ),
+    ),
+    'Enlace' => array( 
+      'field_name'  => 'field_upath', 
+      'label'       => 'Enlace',
+      'description' => 'Enlace a la sección deseada',
+      'required'    => FALSE,
+      'widget'      => array(
+        'type' => 'text',
+      ),
+    ),
+    'Imagen Desk' => array( 
+      'entity_type' => 'node',
+      'field_name'  => 'field_uimg_desk',
+      'label'       => 'Imagen Escritorio',
+      'description' => 'Cargar imagen en versión Escritorio',
+      'required'    => TRUE,
+      'settings'    => array(
+        'file_directory'  => 'field/image',
+        'file_extensions' => 'png gif jpg jpeg',
+        'max_filesize'    => '',
+        'max_resolution'  => '',
+        'min_resolution'  => '',
+        'alt_field'       => FALSE,
+        'title_field'     => '',
+      ),
+    ),
+    'Imagen Mobile' => array( 
+      'entity_type' => 'node',
+      'field_name'  => 'field_uimg_mob',
+      'label'       => 'Imagen Mobile',
+      'description' => 'Cargar imagen en versión Mobile',
+      'required'    => FALSE,
+      'settings'    => array(
+        'file_directory'  => 'field/image',
+        'file_extensions' => 'png gif jpg jpeg',
+        'max_filesize'    => '',
+        'max_resolution'  => '',
+        'min_resolution'  => '',
+        'alt_field'       => FALSE,
+        'title_field'     => '',
+      ),
+    ),/*
+    'Formato' => array( 
+      'field_name'  => 'field_uformat', 
+      'label'       => 'Formato',
+      'description' => 'Seleccione el formato en que se mostrará el bloque (de manera completa o miniatura)',
+      'type'        => 'list_text',
+      'required'    => TRUE,
+      'widget'      => array(
+        'type' => 'options_select'
+      ),
+      'settings' => array(
+        'allowed_values' => $options,
+      ),
+    ),*/
+    'Orden' => array( 
+      'field_name'  => 'field_uorder', 
+      'label'       => 'Orden',
+      'description' => 'Seleccione el orden en que aparecerá este contenido',
+      'type'        => 'list_text',
+      'required'    => TRUE,
+      'widget'      => array(
+        'type' => 'options_select'
+      ),
+      'settings' => array(
+        'allowed_values' => $order,
+      ),
+    ),
+  );
+
+  foreach ($instances as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle']      = 'bem_growcompany';
+    field_create_instance($instance);
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete taxonomy related with the module
+ */
+function bem_growcompany_uninstall() {
+  $nids     = [];
+  $contents = ['bem_brandupkey', 'bem_brandmake', 'bem_brandslide'];
+
+  $qry = db_select('node', 'n');
+  $qry->condition('n.type', 'bem_growcompany', '=');
+  $qry->fields('n', ['nid']);
+  $qry->orderBy('n.created', 'ASC');      
+  $results = $qry->execute()->fetchAll();
+  // Delete all nids of content types
+  foreach ($results as $row) {
+    $nids[] = $row->nid;
+  }//end foreach
+  node_delete_multiple( $nids );
+
+  // Delete contents and instances
+  foreach( field_info_instances('node', 'bem_growcompany') as $field_name => $instance ) {
+    if(field_info_field($field_name)){
+      field_delete_instance($instance);
+    }//end if
+  }//end foreach
+  node_type_delete('bem_growcompany');
+
+  field_purge_batch(1000);
+}
