@@ -2,7 +2,7 @@
 /**
  * @File Redesign Login
  * @author Miguel Martínez <miguel01amd@gmail.com>
- * @package BUPA - Redesign V2
+ * @package BP - SALUD
  * @info This module contains functions to Custom Login
  * @vertion dev 1.0.0.0
  */
@@ -45,7 +45,7 @@ function bem_customlogin_block_info() {
   $blocks['bem_login'] = array(
     'info'       => 'Redesign | Login',
     'status'     => TRUE,
-    'region'     => 'content_bupa',
+    'region'     => 'content_bp',
     'cache'      => DRUPAL_NO_CACHE,
     'visibility' => BLOCK_VISIBILITY_LISTED,
     'pages'      => 'bem-login',
@@ -66,18 +66,18 @@ function bem_customlogin_block_view($delta = '') {
     case 'bem_login':
       if( !user_is_logged_in() ){
         $content = [
-            'info' => bem_customlogin_getinfo(),
-            'form' => drupal_get_form("bem_customlogin_form_login"),
-            'theme_path' => drupal_get_path('theme', 'bupatheme'),
+            'info'                => bem_customlogin_getinfo(),
+            'form'                => drupal_get_form("bem_customlogin_form_login"),
+            'theme_path'          => drupal_get_path('theme', 'bptheme'),
             'login_inicio_sesion' => variable_get('login_inicio_sesion',''),
-            'login_subtitulo' => variable_get('login_subtitulo',''),
-            'login_descr' => variable_get('login_descr','')['value'],
-            'msn_titulo' => variable_get('msn_titulo',''),
-            'msn_subtitulo' => variable_get('msn_subtitulo',''),
-            'msn_descr' => variable_get('msn_descr','')['value'],
+            'login_subtitulo'     => variable_get('login_subtitulo',''),
+            'login_descr'         => variable_get('login_descr','')['value'],
+            'msn_titulo'          => variable_get('msn_titulo',''),
+            'msn_subtitulo'       => variable_get('msn_subtitulo',''),
+            'msn_descr'           => variable_get('msn_descr','')['value'],
         ];
 
-        drupal_add_js(drupal_get_path('theme', 'bupatheme') . '/js/login-user.js', array('scope' => 'footer', 'weight' => 10));
+        drupal_add_js(drupal_get_path('theme', 'bptheme') . '/js/login-user.js', array('scope' => 'footer', 'weight' => 10));
         $block['content'] = theme('bem_login', array('content' => $content));
       }
       else{
@@ -98,9 +98,9 @@ function bem_customlogin_block_view($delta = '') {
 function bem_customlogin_theme() {
   $theme = [];
   $theme['form_customlogin_login'] = [ 'render element' => 'form', 'template' => 'templates/form-login' ];
-  $theme['form_customlogin_pass'] = [ 'render element' => 'form', 'template' => 'templates/form-pass' ];
-  $theme['form_customreset_pass'] = [ 'render element' => 'form', 'template' => 'templates/form-reset' ];
-  $theme['bem_login']             = [ 'template' => 'templates/block-login' ];
+  $theme['form_customlogin_pass']  = [ 'render element' => 'form', 'template' => 'templates/form-pass' ];
+  $theme['form_customreset_pass']  = [ 'render element' => 'form', 'template' => 'templates/form-reset' ];
+  $theme['bem_login']              = [ 'template' => 'templates/block-login' ];
 
   return $theme;
 }
@@ -110,8 +110,7 @@ function bem_customlogin_theme() {
  * @return array ($info)
  * @see bem_customlogin_block_view
  */
-function bem_customlogin_getinfo()
-{
+function bem_customlogin_getinfo() {
     $info = [];
 
     $qry = db_select('node', 'n');
@@ -144,16 +143,16 @@ function bem_customlogin_getinfo()
     if (!empty($results)) {
         foreach ($results as $value) {
             $info = [
-                'tit1' => $value->field_titulo_renglon1_value,
-                'tit2' => $value->field_titulo_renglon2_value,
-                'subt' => $value->field_subtitulo_value,
-                'intro' => $value->field_introduccion_value,
-                'img' => bem_common_getimg($value->field_imagen_de_fondo_fid),
-                'url_url' => $value->field_register_url,
+                'tit1'     => $value->field_titulo_renglon1_value,
+                'tit2'     => $value->field_titulo_renglon2_value,
+                'subt'     => $value->field_subtitulo_value,
+                'intro'    => $value->field_introduccion_value,
+                'img'      => bem_common_getimg($value->field_imagen_de_fondo_fid),
+                'url_url'  => $value->field_register_url,
                 'url_name' => $value->field_register_title,
-                'video' => $value->field_url_noticia_value,
+                'video'    => $value->field_url_noticia_value,
                 'is_video' => $value->field_login_video_visible_value,
-                'svg' => bem_common_getimg($value->field_icon_svg_fid),
+                'svg'      => bem_common_getimg($value->field_icon_svg_fid),
             ];
         }// endoreach
     }// endif
@@ -178,15 +177,15 @@ function bem_customlogin_form_login(){
   );
 
   $form['bem_customlogin_password_login'] = array(
-    '#type'           => 'password',
-    '#title_display'  => 'before',
-    '#default_value'  => '',
-    '#attributes'     => array(
-      'class'        => array('form-control pr-5'),
-      'autocomplete' => 'off',
-      'id'           => 'password',
-      'data-type'    => 'password',
-      'placeholder'  => 'Contraseña',
+    '#type'          => 'password',
+    '#title_display' => 'before',
+    '#default_value' => '',
+    '#attributes'    => array(
+        'class'        => array('form-control pr-5'),
+        'autocomplete' => 'off',
+        'id'           => 'password',
+        'data-type'    => 'password',
+        'placeholder'  => 'Contraseña',
     ),
     '#theme_wrappers' => array()
   );
@@ -206,7 +205,7 @@ function bem_customlogin_form_login(){
 
   $form['#theme']          = 'form_customlogin_login';
   $form['#theme_wrappers'] = array('form');
-  $form['#attributes'] = array('class' => 'data', 'ng-controller' => 'passInput');
+  $form['#attributes']     = array('class' => 'data', 'ng-controller' => 'passInput');
 
   return $form;
 }
