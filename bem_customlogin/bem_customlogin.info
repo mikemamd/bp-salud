@@ -1,0 +1,5 @@
+name = Login - Rediseño
+description = Rediseño de pantalla de Login.
+package = 'BUPA - Redesign V2 | Sign-In'
+version = 1.0
+core = 7.x
