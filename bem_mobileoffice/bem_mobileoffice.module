@@ -1,0 +1,361 @@
+<?php
+/**
+ * @File Redesign "Oficina Móvil"
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Oficina Móvil
+ * @info This module contains functions to blocks on Mobile Office
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_mobileoffice_permission() {
+  return array(
+    'mobile office' => array(
+      'title' => 'Administración de Bloques de Oficina Móvil',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_mobileoffice_menu() {
+  $items = [];
+
+  /* General block to adimin modules of section */
+  $items['admin/config/mobile-office']=array(
+    'title'            => 'BEM V2.0 | OFICINA MÓVIL',
+    'description'      => 'Panel de configuración de Redesign - Modules',
+    'page callback'    => 'system_admin_menu_block_page',
+    'position'         => 'right',
+    'access arguments' => array('mobile office'),
+    'file'             => 'system.admin.inc',
+    'file path'        => drupal_get_path('module', 'system'),
+    'weight'           => 2,
+  );
+  /* Default administer path */
+  $items['admin/config/mobile-office/config'] = array(
+    'title'            => 'Configuración | General - Oficina Móvil',
+    'description'      => 'Configuración de bloques en landing de Oficina Móvil',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_mobileoffice_admin'),
+    'access arguments' => array('mobile office'),
+    'file'             => 'bem_mobileoffice.admin.inc',
+  );
+  /* Paths */
+  $items['oficina-movil'] = array(
+    'title'            => 'Oficina Móvil',
+    'description'      => 'Oficina Móvil - Landing',
+    'page callback'    => 'bem_mobileoffice_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_mobileoffice_page_empty() {
+  return '';
+}
+
+/**
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks
+ *   salesguide_header
+ *   salesguide_stepone
+ *   salesguide_steptwo
+ *   salesguide_stepthree
+ */
+function bem_mobileoffice_block_info() {
+  $blocks = [];
+  $blocks['mobileoffice_header'] = array(
+    'info'       => 'Oficina Móvil | Landing - Header',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil',
+    'weight'     => 1,
+  );
+  $blocks['mobileoffice_cards'] = array(
+    'info'       => 'Oficina Móvil | Landing - cards',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil',
+    'weight'     => 2,
+  );
+  $blocks['mobileoffice_tools'] = array(
+    'info'       => 'Oficina Móvil |  Landing - tools',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil',
+    'weight'     => 3,
+  );
+  $blocks['mobileoffice_clients'] = array(
+    'info'       => 'Oficina Móvil | Testimoniales de Clientes - Otros',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil',
+    'weight'     => 4,
+  );
+  return $blocks;
+}
+
+/*
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_mobileoffice_block_view($delta = '') {
+  $block = [];
+  switch ($delta) {
+    case 'mobileoffice_header':
+        $block['content'] = bem_mobileoffice_getheader();
+      break;
+    case 'mobileoffice_cards':
+        $block['content'] = bem_mobileoffice_getcontent($delta);
+      break;
+    case 'mobileoffice_tools':
+        $block['content'] = bem_mobileoffice_tools();
+      break;
+    case 'mobileoffice_clients':
+        $block['content'] = bem_mobileoffice_getclients();
+      break;
+  }
+
+  return $block;
+}
+
+/*
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_mobileoffice_theme() {
+  $theme = [];
+  $theme['mobileoffice_header']  = [ 'template' => 'templates/block-header' ];
+  $theme['mobileoffice_cards']   = [ 'template' => 'templates/block-cards' ];
+  $theme['mobileoffice_tools']   = [ 'template' => 'templates/block-tools' ];
+  $theme['mobileoffice_clients'] = [ 'template' => 'templates/block-clients' ];
+  return $theme;
+}
+
+/**
+ * Return content to block [mobileoffice_header]
+ * @return theme array ($content)
+ */
+function bem_mobileoffice_getheader() {
+  $content = [
+    'title' => variable_get('mobileoffice_head_title',''),
+    'body'  => variable_get('mobileoffice_head_body',''),
+    'video' => variable_get('mobileoffice_head_video', ''),
+    'img_d' => bem_common_getimg(variable_get('mobileoffice_head_imgd', '')),
+    'img_m' => bem_common_getimg(variable_get('mobileoffice_head_imgm', '')),
+    // Resources info
+  ];
+  $info = [
+    'info_icon' => bem_common_getimg(variable_get('mobileoffice_introsvg', '')),
+    'info_desc' => variable_get('mobileoffice_intro', ''),
+  ];
+
+  return theme('mobileoffice_header', array('content' => $content, 'info' => $info));
+}
+
+/**
+ * Return content to block [mobileoffice_cards, mobileoffice_tools]
+ * @param string ($delta) block type to retrive content
+ *   mobileoffice_cards
+ *   mobileoffice_tools
+ * @return theme array ($content) by $delta
+ */
+function bem_mobileoffice_getcontent($delta = NULL) {
+  $content = $info = [];
+
+  // Consult to retrive content
+  $qry = db_select('node', 'n');
+  $qry->leftJoin('field_data_body', 'body', 'body.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_upath', 'path', 'path.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_uimg_desk', 'img', 'img.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_uorder', 'ord', 'ord.entity_id = n.nid');
+  $qry->condition('n.type', $delta);
+  $qry->condition('n.status', 1);
+  $qry->fields('n', ['nid', 'title'])
+      ->fields('body', ['body_value'])
+      ->fields('path', ['field_upath_value'])
+      ->fields('img', ['field_uimg_desk_fid'])
+      ->fields('ord', ['field_uorder_value']);
+  $qry->orderBy('ord.field_uorder_value', 'ASC');
+  $results = $qry->execute()->fetchAll();
+
+  if (!empty($results)) {
+    foreach ($results as $node) {
+      $content[] = [
+        'title' => $node->title,
+        'desc'  => $node->body_value,
+        'img'   => bem_common_getimg($node->field_uimg_desk_fid),
+        'path'  => $node->field_upath_value,
+        'ord'   => $node->field_uorder_value,
+      ];
+    } // endforeach
+  } // endif
+
+  // Add content block info to [mobileoffice_tools]
+  if ($delta == 'mobileoffice_tools') {
+    $info = [
+      'title' => variable_get('mobileoffice_tools_title',''),
+      'desc'  => variable_get('mobileoffice_tools_body',''),
+    ];
+
+    return theme($delta, array('content' => $content, 'info' => $info));
+  }// endif
+  else {
+    return theme($delta, array('content' => $content));
+  }
+}
+
+function cotizador_ip(){
+  $cotizador_url = NULL;
+  $country = bem_common_ip_user();
+  $acron = ( isset($country['country_code']) && !empty($country['country_code']) ) ? $country['country_code'] : '--';
+  $qry = db_select('field_data_field_url_cotizador', 'url_cotizador');
+  $qry->leftJoin('field_data_field_pais_cotizador', 'pais_cotizador', 'pais_cotizador.entity_id = url_cotizador.entity_id');
+  $qry->leftJoin('field_data_field_bbp_codigo_iso', 'pais_iso', 'pais_iso.entity_id = pais_cotizador.field_pais_cotizador_tid');
+  $qry->condition('pais_iso.field_bbp_codigo_iso_value', $acron, '=');
+  $qry->fields('pais_cotizador', ['field_pais_cotizador_tid']);
+  $qry->fields('url_cotizador', ['entity_id','field_url_cotizador_url']);
+  $results = $qry->execute()->fetchAll();
+  if (!empty($results)) {
+    $cotizador_url = $results[0]->field_url_cotizador_url;
+  }
+  return $cotizador_url;
+}
+
+/**
+ * Return content to block [mobileoffice_cards, mobileoffice_tools]
+ * @param string ($delta) block type to retrive content
+ *   mobileoffice_tools
+ */
+function bem_mobileoffice_tools() {
+    $content = $info = [];
+
+    // Consult to retrive content
+    $qry = db_select('node', 'n');
+    $qry->leftJoin('field_data_body', 'body', 'body.entity_id = n.nid');
+    $qry->leftJoin('field_data_field_upath', 'path', 'path.entity_id = n.nid');
+    $qry->leftJoin('field_data_field_uimg_desk', 'img', 'img.entity_id = n.nid');
+    $qry->leftJoin('field_data_field_uorder', 'ord', 'ord.entity_id = n.nid');
+    $qry->leftJoin('field_data_field_office_new_tab', 'nt', 'nt.entity_id = n.nid');
+
+    $qry->condition('n.type', 'mobileoffice_tools');
+    $qry->condition('n.status', 1);
+    $qry->fields('n', ['nid', 'title'])
+        ->fields('body', ['body_value'])
+        ->fields('path', ['field_upath_value'])
+        ->fields('img', ['field_uimg_desk_fid'])
+        ->fields('ord', ['field_uorder_value'])
+        ->fields('nt', ['field_office_new_tab_value']);
+    $qry->orderBy('ord.field_uorder_value', 'ASC');
+    $results = $qry->execute()->fetchAll();
+
+    if (!empty($results)) {
+        foreach ($results as $node) {
+            if($node->title=='Cotizador'){
+              if (cotizador_ip()!= NULL) {
+                $cotizador_url = cotizador_ip();
+                $cotizador_url_bandera = 1;
+              }
+              else{
+                $cotizador_url = $node->field_upath_value;
+                $cotizador_url_bandera = 0;
+              }
+              $content[] = [
+                'title'  => $node->title,
+                'desc'   => $node->body_value,
+                'img'    => bem_common_getimg($node->field_uimg_desk_fid),
+                'path'   => $cotizador_url,
+                'ord'    => $node->field_uorder_value,
+                'target' =>$cotizador_url_bandera,
+              ];
+            }
+            else{
+              $content[] = [
+                'title'  => $node->title,
+                'desc'   => $node->body_value,
+                'img'    => bem_common_getimg($node->field_uimg_desk_fid),
+                'path'   => $node->field_upath_value,
+                'ord'    => $node->field_uorder_value,
+                'target' => $node->field_office_new_tab_value,
+              ];
+            }
+        } // endforeach
+    } // endif
+    // Add content block info to [mobileoffice_tools]
+    $info = [
+        'title' => variable_get('mobileoffice_tools_title',''),
+        'desc'  => variable_get('mobileoffice_tools_body',''),
+    ];
+
+    return theme('mobileoffice_tools', array('content' => $content, 'info' => $info));
+}
+
+/**
+ * Return content to block [mobileoffice_clients]
+ * @return theme array ($content) by $delta
+ */
+function bem_mobileoffice_getclients() {
+  $content = [];
+
+  // Consult to retrive content
+  $qry = db_select('node', 'n');
+  $qry->leftJoin('field_data_body', 'body', 'body.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_imagen_para_video', 'img', 'img.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_youtube_video_url', 'yt', 'yt.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_video_destacado', 'fvd', 'fvd.entity_id = n.nid');
+  $qry->condition('n.type', 'testimoniales_de_clientes');
+  $qry->condition('n.status', 1);
+  /*
+  if ($delta == 'testimonial_client_top') {
+    $qry->condition('fvd.field_video_destacado_value', 1);
+  } // endif
+  */
+  $qry->fields('n', ['nid', 'title'])
+      ->fields('body', ['body_value'])
+      ->fields('img', ['field_imagen_para_video_fid'])
+      ->fields('yt', ['field_youtube_video_url_video_id'])
+      ->fields('fvd', ['field_video_destacado_value']);
+  $qry->orderBy('n.changed', 'ASC');
+  $results = $qry->execute()->fetchAll();
+
+  if (!empty($results)) {
+    foreach ($results as $node) {
+      $content[] = [
+        'title' => $node->title,
+        'desc'  => $node->body_value,
+        'img'   => bem_common_getimg($node->field_imagen_para_video_fid),
+        'yt'    => $node->field_youtube_video_url_video_id,
+      ];
+    } // endforeach
+  } // endif
+
+  $info = [
+    'title' => variable_get('mobileoffice_client_title',''),
+    'body'  => variable_get('mobileoffice_client_body',''),
+  ];
+    drupal_add_js(drupal_get_path('module', 'bem_mobileoffice') . '/js/mobileoffice.js', array('scope' => 'footer', 'weight' => 8));
+  return theme('mobileoffice_clients', array('content' => $content, 'info' => $info));
+}

@@ -1,0 +1,6 @@
+name = Oficina Móvil.
+description = Sección general de Oficina Móvil.
+package = 'BP - SALUD | Oficina Móvil'
+version = 1.0
+core = 7.x
+configure = admin/config/mobile-office/config

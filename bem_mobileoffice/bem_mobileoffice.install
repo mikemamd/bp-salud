@@ -1,0 +1,216 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "Oficina Movil"
+ * @tmpvariables
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @contenttypes
+ *   mobileoffice_cards => Cards intro on Mobile Office section
+ *   mobileoffice_tools => Content to tools block on Mobile Office section
+ * @taxonomies 
+ */
+function bem_mobileoffice_install(){
+  // Create new content_types
+  $content_types = array(
+    'mobileoffice_cards' => array(
+      'type'          => 'mobileoffice_cards',
+      'name'          => 'Oficina Móvil | Cards intro',
+      'description'   => 'Use para cargar el contenido de las cards introductorias',
+      'title_label'   => 'Título',
+      'base'          => 'node_content',
+      'custom'        => TRUE,
+    ),
+    'mobileoffice_tools' => array(
+      'type'          => 'mobileoffice_tools',
+      'name'          => 'Oficina Móvil | Herramientas',
+      'description'   => 'Use para cargar las Herramientas de Oficina Móvil',
+      'title_label'   => 'Título',
+      'base'          => 'node_content',
+      'custom'        => TRUE,
+    ),
+  );//end content_types
+
+  foreach($content_types as $key => $content){
+    $node_type = node_type_set_defaults($content);
+    node_type_save($node_type);
+  }//end foreach
+
+  // Create Fields to contents and taxonomies
+  field_info_cache_clear();
+  // Options to order selector
+  for ($i = 1; $i < 11; $i++) { 
+    $options[$i] = $i; 
+  }
+
+  // Adds instances on contents 
+  $entities = array(
+    // Instances to content type
+    'mobileoffice_cards' => array(
+      'Description' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'body', 
+        'label'       => 'Body',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_textarea_with_summary'
+        ),
+      ),
+      'Enlace' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_upath', 
+        'label'       => 'Enlace',
+        'description' => 'Enlace que aparecerá en el contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text',
+        ),
+      ),  
+      'Imagen Desk' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uimg_desk',
+        'label'       => 'Imagen',
+        'description' => 'Cargar imagen en versión Escritorio',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $options,
+        ),
+      ),
+    ), // End mobileoffice_cards
+    'mobileoffice_tools' => array(
+      'Description' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'body', 
+        'label'       => 'Body',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_textarea_with_summary'
+        ),
+      ),
+      'Enlace' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_upath', 
+        'label'       => 'Enlace',
+        'description' => 'Enlace que aparecerá en el contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text',
+        ),
+      ),  
+      'Imagen Desk' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uimg_desk',
+        'label'       => 'Imagen',
+        'description' => 'Cargar imagen en versión Escritorio',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $options,
+        ),
+      ),
+    ), // End salesguide_profiles
+
+  );
+
+  foreach ($entities as $entity => $instances) {
+    foreach ($instances as $instance) {
+      $instance['bundle'] = $entity;
+      field_create_instance($instance);
+    }//end foreach
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types, taxonomies and variables related with the module
+ * @content_types
+ *   mobileoffice_cards
+ *   mobileoffice_tools
+ * @taxonomies
+ */
+function bem_mobileoffice_uninstall() {
+  $nids     = [];
+  $contents = ['mobileoffice_cards', 'mobileoffice_tools'];
+
+  /* DELETE ADMIN VARIABLES */
+  variable_del('mobileoffice_head_title','');
+  variable_del('mobileoffice_head_body','');
+  variable_del('mobileoffice_head_video', '');
+  variable_del('mobileoffice_tools_title','');
+  variable_del('mobileoffice_tools_body','');
+  variable_del('mobileoffice_client_title','');
+  variable_del('mobileoffice_client_body','');
+  variable_del('mobileoffice_head_imgd','');
+  variable_del('mobileoffice_head_imgm','');
+
+  $qry = db_select('node', 'n');
+  $qry->condition(db_or()
+      ->condition('n.type', 'mobileoffice_cards', '=')
+      ->condition('n.type', 'mobileoffice_tools', '='));
+  $qry->fields('n', ['nid']);
+  $qry->orderBy('n.created', 'ASC');      
+  $results = $qry->execute()->fetchAll();
+
+  // Delete all nids of content types
+  foreach ($results as $row) {
+    $nids[] = $row->nid;
+  }//end foreach
+  node_delete_multiple( $nids );
+
+  // Delete contents and instances
+  foreach($contents as $content){
+    foreach( field_info_instances('node', $content) as $field_name => $instance ) {
+      if(field_info_field($field_name)){
+        field_delete_instance($instance);
+      }//end if
+    }//end foreach
+    node_type_delete( (string) $content);
+  }//end foreach
+
+  field_purge_batch(1000);
+}
