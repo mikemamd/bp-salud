@@ -1,0 +1,60 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "ARTICLES"
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @taxonomies
+ *   type_articles
+ *   content_articles
+ */
+function bem_articles_install(){
+  $order = [];
+
+  // Create objects with taxonomies
+  $taxonomies = [
+    'type_articles' => (object) array(
+      'name'         => 'Artículos | Tipo de artículos',
+      'machine_name' => 'type_articles',
+      'description'  => 'Categoria de artículos cargados en el Sitio',
+      'module'       => 'bem_articles',
+    ),
+    'content_articles' => (object) array(
+      'name'         => 'Artículos | Filtro - Contenidos artículos',
+      'machine_name' => 'content_articles',
+      'description'  => 'Tipos de contenido relacionados para filtrado',
+      'module'       => 'bem_articles',
+    ),    
+  ];
+
+  foreach ($taxonomies as $taxonomy) {
+    taxonomy_vocabulary_save($taxonomy);
+  } // endforeach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types related with the module
+ * @taxonomies
+ *   type_articles
+ *   type_course
+ */
+function bem_articles_uninstall() {
+  // Delete taxonomies
+  $type   = taxonomy_vocabulary_machine_name_load('type_articles');
+  taxonomy_vocabulary_delete($type->vid);
+
+  // Delete variables tmp of module
+  variable_del('arts_banner_title');
+  variable_del('arts_banner_body');
+  variable_del('arts_banner_video');
+  variable_del('brand_keys');
+  variable_del('arts_imgdesk');
+  variable_del('arts_imgmob');
+
+  field_purge_batch(1000);
+}

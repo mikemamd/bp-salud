@@ -1,0 +1,349 @@
+<?php
+/**
+ * @File Redesign Articles
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Crece tu Empresa
+ * @info This module contains functions to blocks on section Articles
+ * @vertion dev 1.0.0.0
+ */
+
+//Load the service library of content
+module_load_include('inc', 'bem_articles', 'bem_articles.services');
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_articles_permission() {
+    return array(
+        'articles bp' => array(
+            'title' => 'Administración de página de artículos',
+        ),
+        'articles serv' => array(
+            'title' => 'Access to service of articles',
+        ),
+    );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_articles_menu() {
+    $items = [];
+    // Default administer path
+    $items['admin/config/redesign/articles/config'] = array(
+        'title'            => 'Configuración | Artículos',
+        'description'      => 'Configuración de página de Artículos',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bem_articles_admin'),
+        'access arguments' => array('articles bp'),
+        'file'             => 'bem_articles.admin.inc',
+    );
+    // Admin Paths
+    $items['admin/config/redesign/articles/config/general'] = array(
+        'title'            => 'Configuración de Artículos',
+        'description'      => 'Configuración General de Artículos',
+        'access arguments' => array('brand bp'),
+        'file'             => 'bem_articles.admin.inc',
+        'type'             => MENU_DEFAULT_LOCAL_TASK,
+        'weight'           => 1,
+    );
+    // Paths
+    $items['articulos'] = array(
+        'title'            => 'Artículos',
+        'description'      => 'BP - Artículos',
+        'page callback'    => 'bem_articles_page_empty',
+        'access arguments' => array('access content'),
+    );
+
+    // Descarga de documentos de articulos
+    $items['articulos_descarga'] = array(
+        'title'            => 'Descarga de articulos',
+        'description'      => 'BP - Descarga de articulos',
+        'page callback'    => 'bem_articles_download_file',
+        'access arguments' => array('access content'),
+    );
+
+    return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+ */
+function bem_articles_page_empty() {
+    return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to articles landing
+ * @blocks Genels
+ *   bem_header_arts
+ *   bem_filter_arts
+ *   bem_results_arts
+ */
+function bem_articles_block_info() {
+    $blocks = [];
+    $blocks['bem_header_arts'] = array(
+        'info'       => 'Artículos | Header',
+        'status'     => TRUE,
+        'region'     => 'header',
+        'cache'      => DRUPAL_NO_CACHE,
+        'visibility' => BLOCK_VISIBILITY_LISTED,
+        'pages'      => 'articulos',
+        'weight'     => 1,
+    );
+    $blocks['bem_filter_arts'] = array(
+        'info'       => 'Artículos | Filtros de selección',
+        'status'     => TRUE,
+        'region'     => 'content',
+        'cache'      => DRUPAL_NO_CACHE,
+        'pages'      => 'articulos',
+        'visibility' => BLOCK_VISIBILITY_LISTED,
+        'weight'     => 1,
+    );
+    $blocks['bem_results_arts'] = array(
+        'info'       => 'Artículos | Resultados de Artículos',
+        'status'     => TRUE,
+        'region'     => 'content',
+        'cache'      => DRUPAL_NO_CACHE,
+        'pages'      => 'articulos',
+        'visibility' => BLOCK_VISIBILITY_LISTED,
+        'weight'     => 2,
+    );
+
+    return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_articles_block_view($delta = '') {
+    global $base_url;
+    $block = [];
+    module_load_include('inc', 'bem_articles', 'bem_articles');
+
+    switch ($delta) {
+        case 'bem_header_arts':
+            $block['content'] = bem_articles_gethead();
+            break;
+        case 'bem_filter_arts':
+
+            drupal_add_js(drupal_get_path('theme', 'bptheme') . '/js/angular/angular.min.js', array('scope' => 'footer', 'weight' => 6));
+            drupal_add_js(drupal_get_path('theme', 'bptheme') . '/js/angular/app/ng.main.js', array('scope' => 'footer', 'weight' => 7));
+
+            // Set Parameters
+            $params  = drupal_get_query_parameters();
+            $filters = (isset($params['fl'])) ? filter_xss($params['fl']) : '';
+            drupal_add_js([
+                'articles' => [
+                  'filter'      => $filters,
+                  'base'        => $base_url . '/api/bpservice/articles',
+                  'items_limit' => variable_get("page_limit", ""),
+                  'max_pages'   => variable_get("max_pages", ""), ]
+            ], 'setting');
+            drupal_add_js(drupal_get_path('module', 'bem_articles') . '/js/filters.js', array('scope' => 'footer', 'weight' => 8));
+
+            $block['content'] = bem_articles_getfilter();
+            break;
+        case 'bem_results_arts':
+            $content['arts']       = bem_articles_service_content()->data;
+            $content['top']        = bem_growcompany_getarts('sticky');
+            $content['theme_path'] = $base_url . '/' . drupal_get_path('theme', 'bptheme');
+            $block['content']      = theme('bem_results_arts', array('content' => $content));
+            break;
+    }
+    return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_articles_theme() {
+    $theme = [];
+    $theme['bem_header_arts']  = ['template' => 'templates/block-header'];
+    $theme['bem_filter_arts']  = ['template' => 'templates/block-filter'];
+    $theme['bem_results_arts'] = ['template' => 'templates/block-results'];
+    return $theme;
+}
+
+/**
+ * Return content to header
+ * @see bem_articles_block_view
+ * @return theme array ($content)
+ */
+function bem_articles_gethead() {
+    $content = [];
+    // Get variables to header
+    $content = [
+        'title' => variable_get('arts_banner_title', ''),
+        'desc'  => variable_get('arts_banner_body', ''),
+        'video' => variable_get('arts_banner_video', ''),
+        'img_d' => bem_common_getimg(variable_get('arts_imgdesk', '')),
+        'img_m' => bem_common_getimg(variable_get('arts_imgmob', '')),
+    ];
+
+    return theme('bem_header_arts', array('content' => $content));
+}
+
+/**
+ * Implements hook_theme().
+ * Prepare variables to TPL
+ * Add the related arts to current content
+ * @return variables
+ *  arttitle
+ *  artbody
+ *  artbandesk
+ *  artbanmob
+ *  artimg
+ *  artredes
+ *  artpdf
+ *  artsrelated
+ */
+function bem_articles_preprocess_node(&$variables) {
+    switch ($variables['type']) {
+        case 'documentos_de_inter_s_':
+        case 'articulo_conocimiento_industria':
+        case 'capacitaciones':
+        case 'tip_de_ventas':
+        case 'pagina_en_blanco':
+        case 'tutoriales':
+        case 'articulo_general':
+        case 'webinars':
+            $related = [];
+            $artdate = "";
+            global $base_url;
+            $format_date = explode("-", explode(",", $variables['date'])[1])[0];
+            $artdate = date("d \\d\\e F, y", strtotime(str_replace(" ", "", $format_date)));
+
+            // Structure to files content
+            $art_pdf = (isset($variables['field_pdf_descargable_cp'][0]['uri'])) ? $variables['field_pdf_descargable_cp'][0]['uri'] : '';
+            $art_pdf = (empty($art_pdf)) ? $variables['field_pdf_descargable'][0]['uri'] : $art_pdf;
+
+            // Each to related articles
+            foreach ($variables['field_related_arts'] as $key => $value) {
+                if($value['node']->status == 1){
+                    $tid = $value['node']->field_type_articles;
+                    $term = (!empty($tid)) ? taxonomy_term_load($tid['und'][0]['tid'])->name : '';
+                    // General structure
+                    $related[$value['nid']] = [
+                        'title' => $value['node']->title,
+                        'desc' => truncate_utf8($value['node']->body['und'][0]['summary'], 150, FALSE, TRUE),
+                        'type' => (!empty($term)) ? $term : 'Artículo',
+                        'path' => $base_url . '/' . drupal_get_path_alias('node/' . $value['nid']),
+                    ];
+
+                    switch ($value['node']->type) {
+                        case 'documentos_de_inter_s_':
+                            $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_imagen_destacada['und'][0]['fid']);
+                            $related[$value['nid']]['pdf'] = bem_common_getimg($value['node']->field_pdf_descargable['und'][0]['fid']);
+                            break;
+                        case 'articulo_conocimiento_industria':
+                            $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_imagen_articulo_destacado['und'][0]['fid']);
+                            $related[$value['nid']]['pdf'] = bem_common_getimg($value['node']->field_descarga_pdf_ci['und'][0]['fid']);
+                            break;
+                        case 'capacitaciones':
+                            $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_imagen_destacada_cp['und'][0]['fid']);
+                            $related[$value['nid']]['pdf'] = bem_common_getimg($value['node']->field_pdf_descargable_cp['und'][0]['fid']);
+                            break;
+                        case 'tip_de_ventas':
+                            $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_imagen_destacada_cp['und'][0]['fid']);
+                            $related[$value['nid']]['pdf'] = bem_common_getimg($value['node']->field_pdf_descargable_cp['und'][0]['fid']);
+                            break;
+                        case 'tutoriales':
+                            $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_imagen_tutorial['und'][0]['fid']);
+                            break;
+                        case 'webinars':
+                            $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_uimg_desk['und'][0]['fid']);
+                            $related[$value['nid']]['pdf'] = bem_common_getimg($value['node']->field_pdf_descargable['und'][0]['fid']);
+                            break;
+                        default:
+                          $related[$value['nid']]['img'] = bem_common_getimg($value['node']->field_imagen_destacada_cp['und'][0]['fid']);
+                            break;
+                    } // endswitch
+                }
+            } // endforeach
+
+            $variables['artsrelated'] = $related;
+            $variables['artstpl'] = [
+                'nid' => $variables['nid'],
+                'arttitle' => $variables['title'],
+                'artintro' => $variables['body'][0]['summary'],
+                'artbody'  => $variables['body'][0]['value'],
+                'artdate'  => str_replace(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                    ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"], $artdate),
+                'artbandesk' => bem_common_getimg($variables['field_imagen_banner_dc'][0]['fid']),
+                'artbanmob'  => bem_common_getimg($variables['field_imagen_banner_mobile_dc'][0]['fid']),
+                'artimg'     => bem_common_getimg($variables['field_imagen_destacada'][0]['fid']),
+                'artpdf'     => (!empty($art_pdf)) ? $base_url . '/articulos_descarga?file=' . $art_pdf : '',
+                'path'       => $base_url . '/' . drupal_get_path_alias('node/' . $variables['nid']),
+            ];
+
+            if (empty($variables['artstpl']['artbandesk'])) {
+               $variables['artstpl']['artbandesk'] =  bem_common_getimg($variables['field_imagen_banner_cp'][0]['fid']);
+            }
+            if (empty($variables['artstpl']['artbanmob'])) {
+               $variables['artstpl']['artbanmob'] =  bem_common_getimg($variables['field_imagen_banner_mobile_cp'][0]['fid']);
+            }
+            if (empty($variables['artstpl']['artimg'])) {
+               $variables['artstpl']['artimg'] =  bem_common_getimg($variables['field_imagen_destacada_cp'][0]['fid']);
+            }
+            break;
+    }
+}
+
+
+/**
+ * Descarga de archivos de articulos
+ */
+function bem_articles_download_file() {
+    if (!isset($_GET['file']) && empty($_GET['file'])) {
+        drupal_goto("/");
+    } // end if
+
+
+    //sanitize characters on file name
+    $i = 0;
+    $forbidden_chars = [ "../", ".../", "./", ".//", "..//", ".php", ".html", ".css", ".js", ".json", ".patch", ".txt", ".htaccess",  ".htpasswd", "robots.txt", ".sql", ".mysql", ".inc", ".module", "$", "*", "(", ")", "{", "}", "<", ">", ";", "[", "]" ];
+
+    (string) $downname = $_GET['file'];
+
+    $downname = mb_strtolower($downname);
+
+    foreach ($forbidden_chars as $char) {
+        $char_search = strpos($downname, $char);
+
+        if ($char_search !== false) {
+            $i = 1;
+            break;
+        }
+
+    } // endforeach
+
+    if ($i == 1) {
+        watchdog('Intento de descarga ilegal', print_r($downname,true));
+        drupal_goto("/");
+    } // endif
+    else{
+        (int) $id = $_GET['file'];
+        $filename = str_replace("public://", "", $id);
+
+        $file = $_GET['file'];
+        header("Content-type: octet/stream");
+        header("Content-disposition: attachment; filename=" . $filename . ";");
+        header("Content-Length: " . filesize($file));
+        readfile($file);
+
+        exit();
+
+    }
+
+    return;
+}
