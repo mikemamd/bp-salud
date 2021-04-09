@@ -1,0 +1,175 @@
+<?php
+/**
+ * @File Redesign Brand
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Crece tu Empresa
+ * @info This module contains functions to blocks on section Brand
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_brand_permission() {
+  return array(
+    'brand bp' => array(
+      'title' => 'Administración de página Crece tu Empresa - Tu Marca',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_brand_menu() {
+  $items = [];
+  // Default administer path
+  $items['admin/config/redesign/brand/config'] = array(
+    'title'            => 'Configuración | Crece tu Empresa - Tu marca',
+    'description'      => 'Configuración de página de Conoce BP',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_brand_admin'),
+    'access arguments' => array('brand bp'),
+    'file'             => 'bem_brand.admin.inc',
+  );
+  // Admin Paths
+  $items['admin/config/redesign/brand/config/general'] = array(
+    'title'            => 'Admin Crece tu Empresa',
+    'description'      => 'Configuración General de Conoce BP',
+    'access arguments' => array('brand bp'),
+    'file'             => 'bem_brand.admin.inc',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => 1,
+  );
+  // Paths
+  $items['crece-tu-empresa/tu-marca'] = array(
+    'title'            => 'Crece tu Empresa',
+    'description'      => 'Page - Crece tu empresa - Tu Marca',
+    'page callback'    => 'bem_brand_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_brand_page_empty() {
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks Genels
+ *   bem_brand_header
+ *   bem_brand_keys
+ *   bem_brand_make
+ *   bem_brand_slide
+ */
+function bem_brand_block_info() {
+  $blocks = [];
+  $blocks['bem_brand_header'] = array(
+    'info'       => 'Crece tu empresa | Tu marca - Header',
+    'status'     => TRUE,
+    'region'     => 'header',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'crece-tu-empresa/tu-marca',
+    'weight'     => 1,
+  );
+  $blocks['bem_brand_keys'] = array(
+    'info'       => 'Crece tu empresa | Tu marca - Claves para crecer tu marca',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'crece-tu-empresa/tu-marca',
+    'weight'     => 1,
+  );
+  $blocks['bem_brand_make'] = array(
+    'info'       => 'Crece tu empresa | Tu marca - Construyendo una marca',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'pages'      => 'crece-tu-empresa/tu-marca',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 2,
+  );
+  $blocks['bem_brand_slide'] = array(
+    'info'       => 'Crece tu empresa | Tu marca - Slider crece tu marca',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'pages'      => 'crece-tu-empresa/tu-marca',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 3,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_brand_block_view($delta = '') {
+  $block = [];
+  module_load_include('inc','bem_brand','bem_brand');
+  switch ($delta) {
+    case 'bem_brand_header':
+      $block['content'] = bem_brand_getheader();
+      break;
+    case 'bem_brand_keys':
+      $block['content'] = bem_brand_getcontent($delta);
+      break;
+    case 'bem_brand_make':
+      $block['content'] = bem_brand_getcontent($delta);
+      break;
+    case 'bem_brand_slide':
+      $block['content'] = bem_brand_getslide();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_brand_theme() {
+  $theme = [];
+  $theme['bem_brand_header'] = [ 'template' => 'templates/block-header' ];
+  $theme['bem_brand_keys']   = [ 'template' => 'templates/block-keys' ];
+  $theme['bem_brand_make']   = [ 'template' => 'templates/block-brand' ];
+  $theme['bem_brand_slide']  = [ 'template' => 'templates/block-slider' ];
+  return $theme;
+}
+
+/**
+ * Return content to header
+ * @see bem_brand_block_view
+ * @return theme array ($content)
+ */
+function bem_brand_getheader() {
+  $content = [];
+
+  // Load variables to admin
+  $content['title'] = variable_get('brand_banner_title','');
+  $content['desc']  = variable_get('brand_banner_body','');
+  $content['video'] = variable_get('brand_banner_video','');
+  // Load img
+  $content['img_d'] = bem_common_getimg(variable_get('growcompany_imgdesk', ''));
+  $content['img_m'] = bem_common_getimg(variable_get('growcompany_imgmob', ''));
+
+  return theme('bem_brand_header', array('content' => $content));
+}

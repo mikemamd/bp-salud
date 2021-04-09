@@ -1,0 +1,6 @@
+name = Crece tu Empresa - Tu Marca
+description = Sección Crece tu Empresa - Tu Marca.
+package = 'BP - SALUD | Crece tu Empresa'
+dependencies[] = bem_common
+version = 1.0
+core = 7.x

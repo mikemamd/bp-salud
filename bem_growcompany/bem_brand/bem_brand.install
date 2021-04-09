@@ -1,0 +1,245 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "TU MARCA"
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @content_types
+ *   bem_brandupkey => Keys to uo brand
+ *   bem_brandmake  => Make brand tips
+ *   bem_brandslide => Slide to up brand
+ * @create_fields
+ *   field_uformat
+ * @instances
+ *   field_body
+ *   field_uimg_desk
+ *   field_uimg_mob
+ *   field_uorder
+ */
+function bem_brand_install(){
+  $order = [];
+  // Array with new contents
+  $contents = array(
+    'bem_brandupkey' => array(
+      'type'        => 'bem_brandupkey',
+      'name'        => 'Crece tu Empresa | Tu Marca - Claves para crecer tu marca',
+      'description' => 'Use para cargar el contenido de bloque claves para tu marca',
+      'title_label' => 'Título',
+      'base'        => 'node_content',
+      'custom'      => TRUE,
+    ),
+    'bem_brandmake' => array(
+      'type'        => 'bem_brandmake',
+      'name'        => 'Crece tu Empresa | Tu Marca - Construyendo una marca',
+      'description' => 'Use para cargar el contenido de bloque construyendo una marca',
+      'title_label' => 'Título',
+      'base'        => 'node_content',
+      'custom'      => TRUE,
+    ),  
+    'bem_brandslide' => array(
+      'type'        => 'bem_brandslide',
+      'name'        => 'Crece tu Empresa | Tu Marca - Crece tu marca (Slider)',
+      'description' => 'Use para cargar el contenido de bloque de slider de Crece tu marca',
+      'title_label' => 'Título',
+      'base'        => 'node_content',
+      'custom'      => TRUE,
+    ),
+  );//end content
+  // Create a new content type
+  foreach($contents as $content){
+    $node_type = node_type_set_defaults($content);
+    node_type_save($node_type);
+  }//end foreach
+
+  // Options to order selector
+  for ($i = 1; $i < 11; $i++) { 
+    $order[$i] = $i; 
+  }
+
+  // Create instances
+  $entities = array(
+    'bem_brandupkey' => array(
+      'Description' => array( 
+        'field_name'  => 'body', 
+        'label'       => 'Descripción',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_default'
+        ),
+      ),
+      'Icono' => array(
+        'field_name'  => 'field_icon_svg',
+        'label'       => 'Ícono',
+        'description' => 'Cargue el ícono del contenido',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'svg png jpg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array( 
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $order,
+        ),
+      ),
+    ),
+    'bem_brandmake' => array(
+      'Description' => array(
+        'field_name'  => 'body', 
+        'label'       => 'Descripción',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_default'
+        ),
+      ),
+      'Icono' => array(
+        'field_name'  => 'field_icon_svg',
+        'label'       => 'Ícono',
+        'description' => 'Cargue el ícono del contenido',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'svg png jpg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array(
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $order,
+        ),
+      ),
+    ), 
+    'bem_brandslide' => array(
+      'Description' => array( 
+        'field_name'  => 'field_body', 
+        'label'       => 'Descripción',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_textarea'
+        ),
+      ),
+      'Imagen Desk' => array( 
+        'field_name'  => 'field_uimg_desk',
+        'label'       => 'Imagen',
+        'description' => 'Cargar imagen en versión Escritorio',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Imagen Mobile' => array( 
+        'field_name'  => 'field_uimg_mob',
+        'label'       => 'Imagen',
+        'description' => 'Cargar imagen en versión Mobile',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array( 
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $order,
+        ),
+      ),
+    ),
+  );
+
+  foreach ($entities as $entity => $instances) {
+    foreach ($instances as $instance) {
+      $instance['entity_type'] = 'node';
+      $instance['bundle']      = $entity;
+      field_create_instance($instance);
+    }//end foreach
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types related with the module
+ * @content_types
+ *   bem_brandupkey => Keys to uo brand
+ *   bem_brandmake  => Make brand tips
+ *   bem_brandslide => Slide to up brand
+ */
+function bem_brand_uninstall() {
+  $nids     = [];
+  $contents = ['bem_brandupkey', 'bem_brandmake', 'bem_brandslide'];
+
+  $qry = db_select('node', 'n');
+  $qry->condition(db_or()
+        ->condition('n.type', 'bem_brandupkey', '=')
+        ->condition('n.type', 'bem_brandmake', '=')
+        ->condition('n.type', 'bem_brandslide', '='));
+  $qry->fields('n', ['nid']);
+  $qry->orderBy('n.created', 'ASC');      
+  $results = $qry->execute()->fetchAll();
+  // Delete all nids of content types
+  foreach ($results as $row) {
+    $nids[] = $row->nid;
+  }//end foreach
+  node_delete_multiple( $nids );
+
+  // Delete contents and instances
+  foreach($contents as $content){
+    foreach( field_info_instances('node', $content) as $field_name => $instance ) {
+      if(field_info_field($field_name)){
+        field_delete_instance($instance);
+      }//end if
+    }//end foreach
+    node_type_delete( (string) $content);
+  }//end foreach
+
+  field_purge_batch(1000);
+}
