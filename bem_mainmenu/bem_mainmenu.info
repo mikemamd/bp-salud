@@ -1,0 +1,5 @@
+name = Main Menu.
+description = Módulo para mostrar el menú del sitio.
+package = 'BP - SALUD'
+version = 1.0
+core = 7.x

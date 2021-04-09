@@ -1,0 +1,203 @@
+<?php
+/**
+ * @File Redesign Main Menu
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD
+ * @info This module contains functions to Main Menu block
+ * @vertion dev 1.0.0.0
+ */
+
+/*
+ * Implements hook_block_info().
+ * Declare block to footer
+ */
+function bem_mainmenu_block_info() {
+    $blocks = [];
+    $blocks['bem_newmenu'] = array(
+        'info'       => 'Redesign - Main Menu',
+        'status'     => TRUE,
+        'region'     => 'header',
+        'cache'      => DRUPAL_NO_CACHE,
+        'visibility' => BLOCK_VISIBILITY_LISTED,
+        'weight'     => 1,
+    );
+
+    return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_mainmenu_block_view($delta = '') {
+    $block = [];
+    switch ($delta) {
+        case 'bem_newmenu':
+            $block['content'] = bem_mainmenu_content();
+            break;
+    }
+    return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_mainmenu_theme() {
+    $theme = [];
+    $theme['bem_newmenu'] = [ 'template' => 'templates/block-menu' ];
+
+    return $theme;
+}
+
+/**
+ * Return content to block [bem_home_slider]
+ * @return theme array ($content)
+ */
+function bem_mainmenu_content() {
+    $results = _query_main_menu();
+    if (!count($results)) {
+        return [];
+    }//end if
+
+    global $user;
+    $menu = [];
+
+    // Validando pagina actual
+    $match = (array_intersect(_valid_menu_paths($results), array_filter(explode('/', url(current_path())))));
+    $match = (count($match)) ? $match[key($match)] : " ";
+
+    foreach ($results as $key => $result) {
+
+        if ($result->plid > 0) {
+            continue;
+        } // end if
+
+        // Validate links options
+        $link_options = (isset($result->options)) ? unserialize($result->options) : "";
+        // Validate if link has fragment (#)
+        $link = (isset($link_options["fragment"])) ? url($result->link_path) . "#" . $link_options["fragment"] : url($result->link_path);
+
+        // Children results
+        $children = [];
+        $active_count = 0;
+        foreach ($results as $k => $res) {
+            if ($res->plid === $result->mlid) {
+                // Por default el objeto de menu de drupal no despliega fragmentos (#); por lo cual se tienen que buscar en las opciones del link
+                // Des-serealizar las opciones que vienen en el objeto de menu de drupal, para encontrar el fragmento (#fragment) en la url
+                $link_options = (isset($res->options)) ? unserialize($res->options) : "";
+                // Validar existe el fragmento; de ser así se concatena con el link
+                $link_ch = (isset($link_options["fragment"])) ? url($res->link_path) . "#" . $link_options["fragment"] : url($res->link_path);
+
+                // Validacion para mostrar selector "active" en submenu
+                $active = "";
+                $current_path = explode("/", url(current_path()));
+                if ((count($current_path) > 2)) {
+                    if (explode("/", url($res->link_path))[2] === $current_path[2]) {
+                        $active = "active";
+                        $active_count++;
+                    }
+                } // end if
+
+                if($res->link_title=='Cotizador') {
+                    if (cotizador_ip() != NULL) {
+                      $cotizador_url = cotizador_ip();
+                      $cotizador_url_bandera = 1;
+                    }
+                    else{
+                      $cotizador_url = $link_ch;
+                      $cotizador_url_bandera = 0;
+                    }
+                    $children[$result->mlid][] = [
+                        'mlid'   => $res->mlid,
+                        'plid'   => $res->plid,
+                        'name'   => $res->link_title,
+                        'url'    => $cotizador_url,
+                        'target' => ($cotizador_url_bandera==1) ? '_blank' : '',
+                        // Solo mostrar un solo valor activo
+                        'active' => ($active_count <= 1) ? $active : "",
+                        'fragment' => (isset($link_options["fragment"])) ? $link_options["fragment"] : '',
+                    ];
+                }
+                else{
+                    $children[$result->mlid][] = [
+                        'mlid'   => $res->mlid,
+                        'plid'   => $res->plid,
+                        'name'   => $res->link_title,
+                        'url'    => ($link_ch == '<front>') ? url() : $link_ch,
+                        // Solo mostrar un solo valor activo
+                        'active' => ($active_count <= 1) ? $active : "",
+                        'fragment' => (isset($link_options["fragment"])) ? $link_options["fragment"] : '',
+                    ];
+                }
+            }
+        } // end foreach
+
+        // Parents results
+        $menu[] = [
+            'mlid'     => $result->mlid,
+            'plid'     => $result->plid,
+            'name'     => $result->link_title,
+            'url'      => ($link == '<front>') ? url() : $link,
+            'active'   => (preg_match('/' . $match . '/', url($link), $matches)) ? 'active' : '',
+            'children' => $children,
+        ];
+
+    } //end foreach
+
+    // Variables del tema por default
+    global $base_url;
+    $theme_path = $base_url . '/' . drupal_get_path('theme', 'bptheme');
+
+    return theme('bem_newmenu', [
+        'content'    => $menu,
+        'login'      => $user->uid,
+        'user_name'  => $user->name,
+        'theme_path' => $theme_path,
+        'base_url'   => $base_url,
+        'logo'       => theme_get_setting('logo'),
+        ]);
+}
+
+/**
+ * @return array
+ */
+function _query_main_menu() {
+    $results = [];
+    try {
+        $qry = db_select('menu_links', 'mn');
+        $qry->condition('mn.menu_name', 'menu-redesign-men', '=')
+            ->condition('mn.hidden', 0);
+
+        $qry->fields('mn', ['mlid', 'plid', 'link_title', 'link_path', 'options']);
+        $qry->orderBy('weight', 'ASC');
+        $results = $qry->execute()->fetchAll();
+    } catch (Exception $e) {
+    } // end try - catch
+
+    return $results;
+}
+
+/**
+ * @param array $menu
+ * @return array
+ */
+function _valid_menu_paths($menu = []) {
+    $list = [];
+    if (!count($menu)) {
+        return $list;
+    } // end if
+
+    foreach ($menu as $result) {
+        $link_path = explode("/", url($result->link_path));
+        if (count($link_path)) {
+            foreach ($link_path as $lpath) {
+                $list[$lpath] = $lpath;
+            } // end foreach
+        } // end if
+    } // end foreach
+    array_filter(array_unique($list));
+
+    return $list;
+}
