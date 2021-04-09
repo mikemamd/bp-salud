@@ -1,0 +1,196 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "CÓDIGO DE ÉTICA"
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @content_types
+ *   ethics_intro
+ *   ethics_benefits
+ * @instances
+ *   field_body
+ *   field_uimg_desk
+ *   field_uimg_mob
+ *   field_icon_svg
+ *   field_uorder
+ */
+function bem_ethicscode_install(){
+  $order = [];
+  // Array with new contents
+  $contents = array(
+    'ethics_intro' => array(
+      'type'        => 'ethics_intro',
+      'name'        => 'Crece tu empresa | Código de Ética - Intro ',
+      'description' => 'Use para cargar el contenido de bloques introductorios de Código de Ética',
+      'title_label' => 'Título',
+      'base'        => 'node_content',
+      'custom'      => TRUE,
+    ),
+    'ethics_benefits' => array(
+      'type'        => 'ethics_benefits',
+      'name'        => 'Crece tu empresa | Código de Ética - Beneficios',
+      'description' => 'Use para cargar el contenido de bloques de Beneficios',
+      'title_label' => 'Título',
+      'base'        => 'node_content',
+      'custom'      => TRUE,
+    ),
+  );//end content
+  // Create a new content type
+  foreach($contents as $content){
+    $node_type = node_type_set_defaults($content);
+    node_type_save($node_type);
+  }//end foreach
+
+  // Options to order selector
+  for ($i = 1; $i < 11; $i++) {
+    $order[$i] = $i;
+  }
+
+  // Create instances
+  field_info_cache_clear();
+  $entities = array(
+    'ethics_intro' => array(
+      'Description' => array(
+        'field_name'  => 'body',
+        'label'       => 'Descripción',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_default'
+        ),
+      ),
+      'Imagen Desk' => array(
+        'field_name'  => 'field_uimg_desk',
+        'label'       => 'Imagen',
+        'description' => 'Cargar imagen en versión Escritorio',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Imagen Mobile' => array(
+        'field_name'  => 'field_uimg_mob',
+        'label'       => 'Imagen',
+        'description' => 'Cargar imagen en versión Mobile',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'png gif jpg jpeg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array(
+        'field_name'  => 'field_uorder',
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $order,
+        ),
+      ),
+    ),
+    'ethics_benefits' => array(
+      'Description' => array(
+        'field_name'  => 'body',
+        'label'       => 'Descripción',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_default'
+        ),
+      ),
+      'Icono' => array(
+        'field_name'  => 'field_icon_svg',
+        'label'       => 'Ícono',
+        'description' => 'Cargue el ícono del contenido',
+        'required'    => TRUE,
+        'settings'    => array(
+          'file_directory'  => 'field/image',
+          'file_extensions' => 'svg png jpg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array(
+        'field_name'  => 'field_uorder',
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $order,
+        ),
+      ),
+    ),
+  );
+
+
+  foreach ($entities as $entity => $instances) {
+    foreach ($instances as $instance) {
+      $instance['entity_type'] = 'node';
+      $instance['bundle']      = $entity;
+      $flag = field_create_instance($instance);
+    }//end foreach
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types related with the module
+ * @content_types
+ *   ethics_intro
+ *   ethics_benefits
+ */
+function bem_ethicscode_uninstall() {
+  $nids     = [];
+  $contents = ['ethics_intro', 'ethics_benefits'];
+
+  $qry = db_select('node', 'n');
+  $qry->condition(db_or()
+        ->condition('n.type', 'ethics_intro', '=')
+        ->condition('n.type', 'ethics_benefits', '='));
+  $qry->fields('n', ['nid']);
+  $qry->orderBy('n.created', 'ASC');
+  $results = $qry->execute()->fetchAll();
+  // Delete all nids of content types
+  foreach ($results as $row) {
+    $nids[] = $row->nid;
+  }//end foreach
+  node_delete_multiple( $nids );
+
+  // Delete contents and instances
+  foreach($contents as $content){
+    foreach( field_info_instances('node', $content) as $field_name => $instance ) {
+      if(field_info_field($field_name)){
+        field_delete_instance($instance);
+      }//end if
+    }//end foreach
+    node_type_delete( (string) $content);
+  }//end foreach
+
+  field_purge_batch(1000);
+}

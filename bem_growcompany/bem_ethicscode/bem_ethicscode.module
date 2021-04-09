@@ -1,0 +1,187 @@
+<?php
+/**
+ * @File Redesign Ethics Code
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Crece tu Empresa
+ * @info This module contains functions to blocks on section Ethics Code
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_ethicscode_permission() {
+  return array(
+    'ethics bp' => array(
+      'title' => 'Administración de página Código de Ética',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_ethicscode_menu() {
+  $items = [];
+  // Default administer path
+  $items['admin/config/redesign/ethicscode/config'] = array(
+    'title'            => 'Configuración | Crece tu Empresa - Código de Ética',
+    'description'      => 'Configuración de página de Conoce BP',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_ethicscode_admin'),
+    'access arguments' => array('ethics bp'),
+    'file'             => 'bem_ethicscode.admin.inc',
+  );
+  // Admin Paths
+  $items['admin/config/redesign/ethicscode/general'] = array(
+    'title'            => 'Admin Código de Ética',
+    'description'      => 'Configuración General de Crece tu Empresa - Código de Ética',
+    'access arguments' => array('ethics bp'),
+    'file'             => 'bem_ethicscode.admin.inc',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => 1,
+  );
+  // Paths
+  $items['crece-tu-empresa/codigo-de-etica'] = array(
+    'title'            => 'Código de Ética',
+    'description'      => 'Page - Código de Ética - Código de Ética',
+    'page callback'    => 'bem_ethicscode_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_ethicscode_page_empty() {
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks Genels
+ *   ethicscode_header
+ *   ethicscode_intro
+ *   ethicscode_benefits
+ *   ethicscode_program
+ */
+function bem_ethicscode_block_info() {
+  $blocks = [];
+  $blocks['ethicscode_header'] = array(
+    'info'       => 'Crece tu empresa | Código de Ética - Header',
+    'status'     => TRUE,
+    'region'     => 'header',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'crece-tu-empresa/codigo-de-etica',
+    'weight'     => 1,
+  );
+  $blocks['ethicscode_intro'] = array(
+    'info'       => 'Crece tu empresa | Código de Ética - Intro',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'crece-tu-empresa/codigo-de-etica',
+    'weight'     => 1,
+  );
+  $blocks['ethicscode_benefits'] = array(
+    'info'       => 'Crece tu empresa | Código de Ética - Beneficios',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'pages'      => 'crece-tu-empresa/codigo-de-etica',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 2,
+  );
+  $blocks['ethicscode_program'] = array(
+    'info'       => 'Crece tu empresa | Código de Ética - Programa de Cumplimiento',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'pages'      => 'crece-tu-empresa/codigo-de-etica',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 3,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_ethicscode_block_view($delta = '') {
+  $block = [];
+
+  module_load_include('inc','bem_ethicscode','bem_ethicscode');
+  switch ($delta) {
+    case 'ethicscode_header':
+      $block['content'] = bem_ethicscode_getcontent($delta);
+      break;
+    case 'ethicscode_intro':
+      $block['content'] = bem_ethicscode_getintro();
+      break;
+    case 'ethicscode_benefits':
+      $block['content'] = bem_ethicscode_getbenefits();
+      break;
+    case 'ethicscode_program':
+      $block['content'] = bem_ethicscode_getcontent($delta);
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_ethicscode_theme() {
+  $theme = [];
+  $theme['ethicscode_header']   = [ 'template' => 'templates/block-header' ];
+  $theme['ethicscode_intro']    = [ 'template' => 'templates/block-intro' ];
+  $theme['ethicscode_benefits'] = [ 'template' => 'templates/block-benefits' ];
+  $theme['ethicscode_program']  = [ 'template' => 'templates/block-program' ];
+  return $theme;
+}
+
+/**
+ * Return content to header
+ * @see bem_ethicscode_block_view
+ * @param string ($delta) machine name of block to display
+ *   ethicscode_header
+ *   ethicscode_program
+ * @return theme array ($content) by $delta
+ */
+function bem_ethicscode_getcontent($delta) {
+  $content = [];
+
+  // Make array with variables to block content
+  if ($delta == 'ethicscode_header') {
+    $content = [
+      'title' => variable_get('ethics_banner_title',''),
+      'desc'  => variable_get('ethics_banner_body',''),
+      'video' => variable_get('ethics_banner_video',''),
+      'img_d' => bem_common_getimg(variable_get('ethics_imgdesk', '')),
+      'img_m' => bem_common_getimg(variable_get('ethics_imgmob', '')),
+    ];
+  } // endif
+  else {
+    $content = [
+      'title' => variable_get('ethics_pro_title',''),
+      'desc'  => variable_get('ethics_pro_desc',''),
+      'body'  => variable_get('ethics_pro_body',''),
+    ];
+  } // endelse
+
+  return theme($delta, array('content' => $content));
+}

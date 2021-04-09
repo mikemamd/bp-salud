@@ -1,0 +1,6 @@
+name = Crece tu Empresa - Código de Ética
+description = Sección Crece tu Empresa - Código de Ética.
+package = 'BP - SALUD | Crece tu Empresa'
+dependencies[] = bem_common
+version = 1.0
+core = 7.x
