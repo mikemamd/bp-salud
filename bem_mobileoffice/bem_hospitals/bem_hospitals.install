@@ -1,0 +1,29 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "Red de Hospitales"
+ * @tmpvariables
+ */
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types, taxonomies and variables related with the module
+ * @content_types
+ * @taxonomies
+ */
+function bem_hospitals_uninstall() {
+  // Variables to header
+  variable_del('hospitals_head_title','');
+  variable_del('hospitals_head_body','');
+  variable_del('hospitals_head_video', '');
+  // Variables to Content
+  variable_del('hospitals_content_title','');
+  variable_del('hospitals_content_desc','');
+  variable_del('hospitals_content_iframe','');
+  // Images/icons
+  variable_del('hospitals_head_imgd','');
+  variable_del('hospitals_head_imgm','');
+  variable_del('hospitals_content_icon','');
+
+  field_purge_batch(1000);
+}

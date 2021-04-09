@@ -1,0 +1,137 @@
+<?php
+/**
+ * @File Redesign Travel Plans
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Oficina Móvil
+ * @info This module contains functions to blocks on Travel Plans
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_hospitals_menu() {
+  $items = [];
+  /* Admin Paths */
+  $items['admin/config/mobile-office/hospitals/config'] = array(
+    'title'            => 'Configuración | Oficina Móvil - Red de Hospitales',
+    'description'      => 'Configuración de bloques en Oficina Móvil | Red de Hospitales',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_hospitals_admin'),
+    'access arguments' => array('mobile office'),
+    'file'             => 'bem_hospitals.admin.inc',
+  );
+  /* Paths */
+  $items['oficina-movil/red-de-hospitales'] = array(
+    'title'            => 'Red de Hospitales',
+    'description'      => 'Oficina Móvil - Red de Hospitales',
+    'page callback'    => 'bem_hospitals_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_hospitals_page_empty() {
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks
+ *   bem_hospitals_header
+ *   bem_hospitals_content
+ */
+function bem_hospitals_block_info() {
+  $blocks = [];
+  $blocks['bem_hospitals_header'] = array(
+    'info'       => 'Oficina Móvil | Red de Hospitales - Header',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/red-de-hospitales',
+    'weight'     => 1,
+  );
+  $blocks['bem_hospitals_content'] = array(
+    'info'       => 'Oficina Móvil | Red de Hospitales - Intro',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/red-de-hospitales',
+    'weight'     => 2,
+  );
+
+  return $blocks;
+}
+
+/*
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_hospitals_block_view($delta = '') {
+  $block = [];
+
+  switch ($delta) {
+    case 'bem_hospitals_header':
+        $block['content'] = bem_hospitals_getheader();
+      break;
+    case 'bem_hospitals_content':
+        $block['content'] = bem_hospitals_getcontent();
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_hospitals_theme() {
+  $theme = [];
+  $theme['bem_hospitals_header']  = [ 'template' => 'templates/block-header' ];
+  $theme['bem_hospitals_content'] = [ 'template' => 'templates/block-content' ];
+
+  return $theme;
+}
+
+/**
+ * Return content to block [bem_hospitals_header]
+ * @return theme array ($content)
+ */
+function bem_hospitals_getheader() {
+  $content = [
+    'title' => variable_get('hospitals_head_title',''),
+    'body'  => variable_get('hospitals_head_body',''),
+    'video' => variable_get('hospitals_head_video', ''),
+    'img_d' => bem_common_getimg(variable_get('hospitals_head_imgd', '')),
+    'img_m' => bem_common_getimg(variable_get('hospitals_head_imgm', '')),
+  ];
+
+  return theme('bem_hospitals_header', array('content' => $content));
+}
+
+/**
+ * Return content to block [bem_hospitals_content]
+ * @return theme array ($content)
+ */
+function bem_hospitals_getcontent() {
+  $content = [
+    'title' => variable_get('hospitals_content_title',''),
+    'body'  => variable_get('hospitals_content_desc',''),
+    'frame' => variable_get('hospitals_content_iframe', ''),
+    'icon'  => bem_common_getimg(variable_get('hospitals_content_icon', '')),
+  ];
+
+  return theme('bem_hospitals_content', array('content' => $content));
+}
