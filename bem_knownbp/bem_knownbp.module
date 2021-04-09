@@ -1,0 +1,318 @@
+<?php
+/**
+ * @File Redesign Home
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD
+ * @info This module contains functions to blocks on Conoce BP
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Implements hook_permission().
+ * Define the user perms to view admin content
+ * @return array (permisions)
+ */
+function bem_knownbp_permission() {
+  return array(
+    'know bp' => array(
+      'title' => 'Administración de Bloques en Conoce bp',
+    ),
+  );
+}
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_knownbp_menu() {
+  $items = [];
+  /* Default administer path */
+  $items['admin/config/redesign/knowbp/config'] = array(
+    'title'            => 'Configuración | Conoce bp',
+    'description'      => 'Configuración de bloques en Conoce bp | ¿Quién es bp - ¿Por qué bp?)',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_knowbp_admin'),
+    'access arguments' => array('know bp'),
+    'file'             => 'bem_knownbp.admin.inc',
+  );
+  /* Admin Paths */
+  $items['admin/config/redesign/knowbp/config/general'] = array(
+    'title'            => 'Admin Conoce bp',
+    'description'      => 'Configuración General de Conoce bp ',
+    'access arguments' => array('know bp'),
+    'file'             => 'bem_knownbp.admin.inc',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => 1,
+  );
+  $items['admin/config/redesign/knowbp/config/who-is-bp'] = array(
+    'title'            => '¿Quién es bp?',
+    'description'      => 'Configuracion de sección: ¿Quién es bp?',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_knowbp_whoisbp'),
+    'access arguments' => array('know bp'),
+    'type'             => MENU_LOCAL_TASK,
+    'file'             => 'bem_knownbp.admin.inc',
+    'weight'           => 2,
+  );
+  $items['admin/config/redesign/knowbp/config/why-bp'] = array(
+    'title'            => '¿Por qué bp?',
+    'description'      => 'Configuracion de sección: ¿Por qué bp?',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_knowbp_whybp'),
+    'access arguments' => array('know bp'),
+    'type'             => MENU_LOCAL_TASK,
+    'file'             => 'bem_knownbp.admin.inc',
+    'weight'           => 3,
+  );
+  /* Paths */
+  $items['conoce-bp'] = array(
+    'title'            => '¿Quién es bp?',
+    'description'      => 'Conoce bp - ¿Quién es bp?',
+    'page callback'    => 'bem_knownbp_page_empty',
+    'access arguments' => array('access content'),
+  );
+  $items['conoce-bp/quien-es-bp'] = array(
+    'title'            => '¿Quién es bp?',
+    'description'      => 'Conoce bp - ¿Quién es bp?',
+    'page callback'    => 'bem_knownbp_page_empty',
+    'access arguments' => array('access content'),
+  );
+  $items['conoce-bp/por-que-bp'] = array(
+    'title'            => '¿Por qué bp?',
+    'description'      => 'Conoce bp - ¿Por qué bp?',
+    'page callback'    => 'bem_knownbp_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_knownbp_page_empty() {
+  return "";
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks Genels
+ *   knowbp_general
+ * @blocks Who is bp?
+ *   know_why_history
+ *   know_why_strt
+ *   know_why_vision
+ *   know_why_prup
+ * @blocks Why bp?
+ *   know_who_intro
+ *   know_who_sales
+ *   know_who_adv
+ *   know_who_asos
+ *   know_who_test
+ *   know_who_know
+ */
+function bem_knownbp_block_info() {
+  $blocks = [];
+  // Blocks -> Generals
+  $blocks['knowbp_general'] = array(
+    'info'       => 'Conoce bp | General - Banner',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/quien-es-bp',
+    'weight'     => 1,
+  );
+  // Blocks -> Who is bp?
+  $blocks['know_who_history'] = array(
+    'info'       => 'Conoce bp | ¿Quién es bp? - Nuestra Historia',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/quien-es-bp',
+    'weight'     => 2,
+  );
+  $blocks['know_who_strt'] = array(
+    'info'       => 'Conoce bp | ¿Quién es bp? - Estructura',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/quien-es-bp',
+    'weight'     => 3,
+  );
+  $blocks['know_who_vision'] = array(
+    'info'       => 'Conoce bp | ¿Quién es bp? - Nuestra Visión',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/quien-es-bp',
+    'weight'     => 4,
+  );
+  $blocks['know_who_prup'] = array(
+    'info'       => 'Conoce bp | ¿Quién es bp? - Nuestro Propósito',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/quien-es-bp',
+    'weight'     => 5,
+  );
+  // Blocks -> Why bp?
+  $blocks['know_why_intro'] = array(
+    'info'       => 'Conoce bp | ¿Por qué bp? - Intro',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/por-que-bp',
+    'weight'     => 2,
+  );
+  $blocks['know_why_sales'] = array(
+    'info'       => 'Conoce bp | ¿Por qué bp? - Presentación de Ventas',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/por-que-bp',
+    'weight'     => 3,
+  );
+  $blocks['know_why_adv'] = array(
+    'info'       => 'Conoce bp | ¿Por qué bp? - Ventajas Competitivas',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/por-que-bp',
+    'weight'     => 4,
+  );
+  $blocks['know_why_test'] = array(
+    'info'       => 'Conoce bp | ¿Por qué bp? - Testimoniales de Agentes',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/por-que-bp',
+    'weight'     => 5,
+  );
+  $blocks['know_why_know'] = array(
+    'info'       => 'Conoce bp | ¿Por qué bp? - Conoce más de bp',
+    'status'     => TRUE,
+    'region'     => 'content',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'conoce-bp/por-que-bp',
+    'weight'     => 6,
+  );
+
+  return $blocks;
+}
+
+/*
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_knownbp_block_view($delta = '') {
+  $block = [];
+  module_load_include('inc','bem_knownbp','bem_knownbp');
+  switch ($delta) {
+    // Generals
+    case 'knowbp_general':
+        $block['content'] = bem_knownbp_generals();
+      break;
+    // Who is bp?
+    case 'know_who_history':
+        $block['content'] = bem_knownbp_whohistory();
+      break;
+    case 'know_who_strt':
+        $block['content'] = bem_knownbp_whostrt();
+      break;
+    case 'know_who_vision':
+        $block['content'] = bem_knownbp_whovision();
+      break;
+    case 'know_who_prup':
+        $block['content'] = bem_knownbp_whoprup();
+      break;
+    // Why bp?
+    case 'know_why_intro':
+        $block['content'] = bem_knownbp_whyintro();
+      break;
+    case 'know_why_sales':
+        $block['content'] = bem_knownbp_whysales();
+      break;
+    case 'know_why_adv':
+        $block['content'] = bem_knownbp_whyadv();
+      break;
+    case 'know_why_test':
+        $block['content'] = bem_knownbp_whytest();
+      break;
+    case 'know_why_know':
+        $block['content'] = bem_knownbp_whyknow();
+      break;
+  }
+  return $block;
+}
+
+/*
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_knownbp_theme() {
+  $theme = [];
+  // Generals
+  $theme['knowbp_general']   = [ 'template' => 'templates/block-general' ];
+  // Who is bp?
+  $theme['know_who_history'] = [ 'template' => 'templates/who/block-history' ];
+  $theme['know_who_strt']    = [ 'template' => 'templates/who/block-strt' ];
+  $theme['know_who_vision']  = [ 'template' => 'templates/who/block-vision' ];
+  $theme['know_who_prup']    = [ 'template' => 'templates/who/block-prup' ];
+  // Why bp?
+  $theme['know_why_intro']   = [ 'template' => 'templates/why/block-intro' ];
+  $theme['know_why_sales']   = [ 'template' => 'templates/why/block-sales' ];
+  $theme['know_why_adv']     = [ 'template' => 'templates/why/block-adv' ];
+  $theme['know_why_test']    = [ 'template' => 'templates/why/block-test' ];
+  $theme['know_why_know']    = [ 'template' => 'templates/why/block-know' ];
+
+  return $theme;
+}
+
+/*
+ * Return content to block [knowbp_general]
+ * @return theme array ($content)
+ */
+function bem_knownbp_generals() {
+  global $base_url;
+
+  $content = [];
+  $content['banner'] = [
+    'title' => variable_get('knowbp_title',''),
+    'body'  => variable_get('knowbp_body',''),
+    'video' => variable_get('knowbp_video', ''),
+    'img_d' => bem_common_getimg(variable_get('knowbp_imgdesk', '')),
+    'img_m' => bem_common_getimg(variable_get('knowbp_imgmob', '')),
+  ];
+  $content['intro'] = [
+    'intro' => variable_get('knowbp_intro',''),
+  ];
+  $content['icons']['why']['svg'] = $base_url . '/' . drupal_get_path('theme', 'bptheme') . '/img/icons/quien.svg';
+  $content['icons']['who']['svg'] = $base_url . '/' . drupal_get_path('theme', 'bptheme') . '/img/icons/porque.svg';
+
+  $path = request_path();
+
+    $content['icons']['why']['class'] = 'active';
+    $content['icons']['who']['class'] = '';
+    if ( !empty($path) ) {
+    if ($path == 'conoce-bp/por-que-bp') {
+      $content['icons']['why']['class'] = '';
+      $content['icons']['who']['class'] = 'active';
+    } // endif
+  } // end if
+
+  return theme('knowbp_general', array('content' => $content));
+}

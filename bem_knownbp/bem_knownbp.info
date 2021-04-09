@@ -1,0 +1,7 @@
+name = Conoce BP.
+description = Módulo de rediseño de sección Conoce BP.
+package = 'BP - SALUD'
+dependencies[] = bp_redesign
+version = 1.0
+core = 7.x
+configure = admin/config/redesign/knowbp/config
