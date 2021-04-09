@@ -1,0 +1,50 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to Footer Block.
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install taxonomies and insert fields
+ * @taxonomies 
+ *   bem_redes  => Social Redes
+ */
+function bem_footer_install(){
+  // Create a new taxonomy to menu of site
+  taxonomy_vocabulary_save((object) array(
+    'name'         => 'Redes Sociales',
+    'machine_name' => 'bem_redes',
+    'description'  => 'Vocabulario para menú de Redes Sociales',
+    'module'       => 'bem_footer',
+  ));
+
+  // Add field on taxonomy
+  field_info_cache_clear();
+  $field = [
+    'entity_type' => 'taxonomy_term',
+    'bundle'      => 'bem_redes',
+    'field_name'  => 'field_icon_class', 
+    'label'       => 'Icon Class',
+    'description' => 'Clase CSS para ícono de front-end',
+    'required'    => TRUE,
+    'widget'      => array(
+      'type' => 'text',
+    ),
+  ];
+
+  field_create_instance($field);
+}
+
+
+/**
+ * Implements hook_uninstall().
+ * Delete taxonomy related with the module
+ */
+function bem_footer_uninstall() {
+  // Load taxonomy
+
+  $voc_id = taxonomy_vocabulary_machine_name_load('bem_redes');
+  taxonomy_vocabulary_delete($voc_id->vid);
+  field_purge_batch(1000); 
+}

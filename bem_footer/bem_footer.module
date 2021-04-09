@@ -1,0 +1,106 @@
+<?php
+/**
+ * @File Redesign Footer
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD
+ * @info This module contains functions to Footer block
+ * @vertion dev 1.0.0.0
+ */
+
+/*
+ * Implements hook_block_info().
+ * Declare block to footer
+ */
+function bem_footer_block_info() {
+  $blocks = [];
+  $blocks['bem_newfooter'] = array(
+    'info'       => 'Redesign - Footer',
+    'status'     => TRUE,
+    'region'     => 'footer',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 1,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_footer_block_view($delta = '') {
+  $block = [];
+  switch ($delta) {
+    case 'bem_newfooter':
+      $block['content'] = bem_footer_content();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_footer_theme() {
+  $theme = [];
+  $theme['bem_newfooter'] = [ 'template' => 'templates/block-footer' ];
+  return $theme;
+}
+
+/**
+ * Return content to block [bem_home_slider]
+ * @return theme array ($content)
+ */
+function bem_footer_content() {
+  global $base_url;
+  $menu = [];
+
+  $qry = db_select('menu_links', 'mn');
+  $qry->condition('mn.menu_name', 'menu-re-footer', '=')
+      ->condition('mn.hidden', 0);
+  $qry->fields('mn', ['mlid', 'link_title','link_path']);
+  $qry->orderBy('weight', 'ASC');
+  $results = $qry->execute()->fetchAll();
+
+  if (isset($results) && !empty($results)) {
+    foreach ($results as $key => $result) {
+      // Link path
+      $link = url($result->link_path);
+      if ($link == '<front>') {
+        $link = url();
+      }
+      $row = ($key < 3) ? 'one' : 'two';
+      $menu['links'][$row][] = [
+        'name' => $result->link_title,
+        'url'  => $link,
+      ];
+    }//end foreach
+  }//end if
+
+  $vocab = taxonomy_vocabulary_machine_name_load('bem_redes');
+  $vid   = $vocab->vid;
+
+  $query = db_select('taxonomy_term_data', 'tx');
+  $query->leftJoin('field_data_field_icon_svg', 'fsvg', 'fsvg.entity_id = tx.tid');
+  $query->condition('tx.vid', $vid, '=');
+  $query->fields('tx', ['tid', 'name', 'description'])
+        ->fields('fsvg', ['field_icon_svg_fid']);
+  $query->orderBy('weight', 'ASC');
+  $results = $query->execute()->fetchAll();
+
+  if (!empty($results)) {
+    foreach ($results as $result) {
+      $menu['redes'][] = [
+        'tid'  => $result->tid,
+        'name' => $result->name,
+        'link' => $result->description,
+        'icon' => bem_common_getimg($result->field_icon_svg_fid),
+      ];
+    }
+  }
+
+  return theme('bem_newfooter', array('content' => $menu));
+}

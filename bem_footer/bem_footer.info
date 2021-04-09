@@ -1,0 +1,5 @@
+name = Footer.
+description = Módulo para mostrar Footer.
+package =  'BP - SALUD'
+version = 1.0
+core = 7.x
