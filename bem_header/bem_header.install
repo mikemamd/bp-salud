@@ -1,0 +1,94 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to Header.
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @contenttypes
+ *   bem_alerts => Banner to Alerts on home
+ *   knowbp_pqb_intro => Content blocks of intro why BP?
+ * @taxonomies
+ *   knowbp_qeb_purpose  => Menu home tools
+ */
+function bem_header_install(){
+  // Array with new content
+  $content = array(
+    'type'        => 'bem_alerts',
+    'name'        => 'BEM - ALERTS',
+    'description' => 'Alertas que aparecerán en encabezado de Home',
+    'title_label' => 'Título',
+    'base'        => 'node_content',
+    'custom'      => TRUE,
+  );//end content
+  // Create a new content type
+  $node_type = node_type_set_defaults($content);
+  node_type_save($node_type);
+
+  // Create fields
+  field_info_cache_clear();
+  $fields = array(
+    'enlace_externo' => array(
+      'field_name' => 'field_upath',
+      'type'       => 'text'
+    ),
+    'position' => array(
+      'field_name' => 'field_uorder',
+      'type'       => 'list_integer'
+    ),
+  );
+
+  foreach($fields as $field) {
+    if( !field_info_field($field['field_name']) ){
+      field_create_field($field);
+    }//end if
+  }//end foreach
+
+  // Options to list selector
+  for ($i = 1; $i < 11; $i++) {
+    $options[$i] = $i;
+  }
+  // Create instances
+  $instances = array(
+    'Enlace' => array(
+      'field_name'  => 'field_upath',
+      'label'       => 'Enlace externo',
+      'description' => 'Enlace esterno que aparecerá en el banner',
+      'required'    => TRUE,
+      'widget'      => array(
+        'type' => 'text',
+      ),
+    ),
+    'Orden' => array(
+      'field_name'  => 'field_uorder',
+      'label'       => 'Orden',
+      'description' => 'Seleccione el orden en que aparecerá este contenido',
+      'type'        => 'list_text',
+      'required'    => TRUE,
+      'widget'      => array(
+        'type' => 'options_select'
+      ),
+      'settings' => array(
+        'allowed_values' => $options,
+      ),
+    ),
+  );
+
+  foreach ($instances as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle']      = 'bem_alerts';
+    field_create_instance($instance);
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete taxonomy related with the module
+ */
+function bem_header_uninstall() {
+  $content = "header";
+  watchdog('desintalado correctamente', print_r($content, true));
+}

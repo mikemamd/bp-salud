@@ -1,0 +1,144 @@
+<?php
+/**
+ * @File Redesign Header
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Crece tu Empresa
+ * @info This module contains functions to blocks on new header
+ * @vertion dev 1.0.0.0
+ */
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ */
+function bem_header_block_info() {
+  $blocks = [];
+  $blocks['bem_new_header'] = array(
+    'info'       => 'Redesign - Header',
+    'status'     => TRUE,
+    'region'     => 'header',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 1,
+  );
+  $blocks['bem_alerts'] = array(
+    'info'       => 'Alerts - Banner',
+    'status'     => TRUE,
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 1,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_header_block_view($delta = '') {
+  $block = [];
+  switch ($delta) {
+    case 'bem_new_header':
+      $block['content'] = bem_get_header();
+      break;
+    case 'bem_alerts':
+      $block['content'] = bem_get_alerts();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_header_theme() {
+  $theme = [];
+  $theme['bem_new_header'] = [ 'template' => 'templates/block-header' ];
+  $theme['bem_alerts']     = [ 'template' => 'templates/block-alert' ];
+  return $theme;
+}
+
+/**
+ * Return content to block [bem_new_header]
+ * @return theme array ($content)
+ */
+function bem_get_header() {
+  global $base_url;
+  $menu = [];
+
+  $qry = db_select('menu_links', 'mn');
+  $qry->condition('mn.menu_name', 'main-menu', '=')
+      ->condition('mn.hidden', 0);
+  $qry->fields('mn', ['mlid', 'link_title','link_path']);
+  $qry->orderBy('weight', 'ASC');
+  $results = $qry->execute()->fetchAll();
+
+  if (isset($results) && !empty($results)) {
+    foreach ($results as $result) {
+
+      // Link path
+      $link = url($result->link_path);
+
+      if ($link == '<front>') {
+        $link = url();
+      }
+
+      $menu[] = [
+        'name' => $result->link_title,
+        'url'  => $link,
+      ];
+
+    }//end foreach
+  }//end if
+
+  return theme('bem_new_header', array('content' => $menu));
+}
+
+/**
+ * Return content to block [bem_new_header]
+ * @return theme array ($content)
+ */
+function bem_get_alerts() {
+  global $base_url;
+  $pre_content = $content = [];
+  /* kind of content type to show */
+  $mode = [ 1 => "alert", 2 => "code", 3 => "all" ];
+
+  $query = db_select('node', 'n');
+  $query->leftJoin('field_data_field_body', 'fb', 'fb.entity_id = n.nid');
+  $query->leftJoin('field_data_field_upath', 'fup', 'fup.entity_id = n.nid');
+  $query->leftJoin('field_data_field_uorder', 'fuo', 'fuo.entity_id = n.nid');
+
+  $query->leftJoin('field_data_field_html_code', 'fhc', 'fhc.entity_id = n.nid');
+  $query->leftJoin('field_data_field_show_alert', 'fsa', 'fsa.entity_id = n.nid');
+
+  $query->condition('n.type', 'bem_alerts');
+  $query->condition('n.status', 1);
+  $query->fields('n', ['nid', 'title'])
+        ->fields('fb', ['field_body_value'])
+        ->fields('fup', ['field_upath_value'])
+        ->fields('fuo', ['field_uorder_value'])
+        ->fields('fhc', ['field_html_code_value'])
+        ->fields('fsa', ['field_show_alert_value']);
+  $query->orderBy('fuo.field_uorder_value', 'ASC');
+  $results = $query->execute()->fetchAll();
+
+  if ( !empty($results) ) {
+    foreach ($results as $result) {
+      $content = [
+        'mode'  => $mode[$result->field_show_alert_value],
+        'nid'   => $result->nid,
+        'title' => $result->title,
+        'desc'  => $result->field_body_value,
+        'path'  => $result->field_upath_value,
+        'orden' => $result->field_uorder_value,
+        'html'  => $result->field_html_code_value,
+      ];
+    }//endfor
+  }//endif
+
+  return theme('bem_alerts', array('content' => $content));
+}
