@@ -1,7 +1,7 @@
 <?php
 /**
  * @File Redesign Login
- * @author Miguel Martínez <miguel.martinez@ogilvy.com>
+ * @author Miguel Martínez <miguel01amd@gmail.com>
  * @package BUPA - Redesign V2
  * @info This module contains functions to Custom Login
  * @vertion dev 1.0.0.0
@@ -11,14 +11,14 @@
  * Define URLS to admin and sections pages
  * Implements hook_menu().
  * @return array (paths)
- */ 
-function bem_customlogin_menu() { 
+ */
+function bem_customlogin_menu() {
   $items = [];
 
   /* Paths */
   $items['bem-login'] = array(
     'title'            => 'Login',
-    'description'      => 'BEM - LOGIN', 
+    'description'      => 'BEM - LOGIN',
     'page callback'    => 'bem_customlogin_page_empty',
     'access arguments' => array('access content'),
   );
@@ -28,7 +28,7 @@ function bem_customlogin_menu() {
 
 /**
  * @info Define empty page
- * @return (string) 
+ * @return (string)
 */
 function bem_customlogin_page_empty() {
   return '';
@@ -39,7 +39,7 @@ function bem_customlogin_page_empty() {
  * Declare blocks to home
  * @blocks
  *   bem_login
- */ 
+ */
 function bem_customlogin_block_info() {
   $blocks = [];
   $blocks['bem_login'] = array(
@@ -57,9 +57,9 @@ function bem_customlogin_block_info() {
 
 /*
  * Implements hook_block_view().
- * Callback to block info 
- */ 
-function bem_customlogin_block_view($delta = '') { 
+ * Callback to block info
+ */
+function bem_customlogin_block_view($delta = '') {
   $block = [];
 
   switch ($delta) {
@@ -79,7 +79,7 @@ function bem_customlogin_block_view($delta = '') {
 
         drupal_add_js(drupal_get_path('theme', 'bupatheme') . '/js/login-user.js', array('scope' => 'footer', 'weight' => 10));
         $block['content'] = theme('bem_login', array('content' => $content));
-      } 
+      }
       else{
         global $base_url;
         drupal_goto($base_url . '/user');
@@ -181,7 +181,7 @@ function bem_customlogin_form_login(){
     '#type'           => 'password',
     '#title_display'  => 'before',
     '#default_value'  => '',
-    '#attributes'     => array( 
+    '#attributes'     => array(
       'class'        => array('form-control pr-5'),
       'autocomplete' => 'off',
       'id'           => 'password',
@@ -196,7 +196,7 @@ function bem_customlogin_form_login(){
     '#value'  => $_GET["redirectProtectedNodeId"]
   );
 
-  $form['submit'] = array( 
+  $form['submit'] = array(
       '#type'       => 'submit' ,
       '#value'      => 'Iniciar Sesión',
       '#attributes' => array('class' => array('btn btn-primary btn-orange')),
@@ -275,7 +275,7 @@ function bem_customlogin_form_login_submit($form,&$form_state){
 
 /**
  * Use preprocess_page() hook.
- * Function to redirect login custom 
+ * Function to redirect login custom
  */
 function bem_customlogin_preprocess_page(&$variables) {
   // Load the URL Request
