@@ -1,0 +1,178 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "Oficina Movil"
+ * @tmpvariables
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @contenttypes
+ *   salesguide_profiles => Profiles to section
+ * @taxonomies 
+ *   salesguide_icons  => Menu home tools
+ */
+function bem_salesguide_install(){
+  // Create new content_types
+  $content_types = array(
+    'salesguide_profiles' => array(
+      'type'          => 'salesguide_profiles',
+      'name'          => 'Oficina Móvil | Guía de Ventas - Perfiles',
+      'description'   => 'Use para cargar los perfiles de la sección guía de ventas',
+      'title_label'   => 'Título',
+      'base'          => 'node_content',
+      'custom'        => TRUE,
+    ),
+
+  );//end content_types
+  foreach($content_types as $key => $content){
+    $node_type = node_type_set_defaults($content);
+    node_type_save($node_type);
+  }//end foreach
+
+  // Create a new taxonomy to icons slider
+  taxonomy_vocabulary_save((object) array(
+    'name'         => 'Oficina Móvil | Guía de ventas - Grid Iconos',
+    'machine_name' => 'salesguide_icons',
+    'description'  => 'Vocabulario para grid de íconos en sección Guía de Ventas',
+    'module'       => 'bem_salesguide',
+  ));
+
+  // Create Fields to contents and taxonomies
+  field_info_cache_clear();
+  // Options to order selector
+  for ($i = 1; $i < 11; $i++) { 
+    $options[$i] = $i; 
+  }
+
+  // Adds instances on contents and taxonomies 
+  $entities = array(
+    // Instances to content type
+    'salesguide_profiles' => array(
+      'Description' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'body', 
+        'label'       => 'Body',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_textarea_with_summary'
+        ),
+      ),
+      'Icons' => array(
+        'entity_type' => 'node',
+        'field_name'  => 'field_icon_svg',
+        'type'        => 'file',
+        'label'       => 'Icono SVG',
+        'description' => 'Suba archivo de SVG para ícono',
+        'settings'    => array(
+          'file_directory'  => 'field/iconssvg',
+          'file_extensions' => 'svg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+      'Orden' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $options,
+        ),
+      ),
+    ), // End salesguide_profiles
+    // Taxonomy fields
+    'salesguide_icons' => array(
+      'Icons' => array(
+        'entity_type' => 'taxonomy_term',
+        'field_name'  => 'field_icon_svg',
+        'type'        => 'file',
+        'label'       => 'Icono SVG',
+        'description' => 'Suba archivo de SVG para ícono',
+        'settings'    => array(
+          'file_directory'  => 'field/iconssvg',
+          'file_extensions' => 'svg',
+          'max_filesize'    => '',
+          'max_resolution'  => '',
+          'min_resolution'  => '',
+          'alt_field'       => FALSE,
+          'title_field'     => '',
+        ),
+      ),
+    ),
+  );
+
+  foreach ($entities as $entity => $instances) {
+    foreach ($instances as $instance) {
+      $instance['bundle'] = $entity;
+      field_create_instance($instance);
+    }//end foreach
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types, taxonomies and variables related with the module
+ * @content_types
+ *   salesguide_profiles
+ * @taxonomies
+ *   salesguide_icons
+ */
+function bem_salesguide_uninstall() {
+  $nids = [];
+
+  /* DELETE ADMIN VARIABLES */
+  // Variables to header
+  variable_del('salesguide_head_title','');
+  variable_del('salesguide_head_body','');
+  variable_del('salesguide_head_video', '');
+  variable_del('salesguide_head_imgd', '');
+  variable_del('salesguide_head_imgm', '');
+  // Variables to Step One
+  variable_del('salesguide_stepone_title','');
+  variable_del('salesguide_stepone_stitle','');
+  variable_del('salesguide_stepone_desc', '');
+  // Variables to Step Two
+  variable_del('salesguide_steptwo_title','');
+  variable_del('salesguide_steptwo_stitle','');
+  variable_del('salesguide_steptwo_desc', '');
+  // Variables to Step Three
+  variable_del('salesguide_stepthree_title','');
+  variable_del('salesguide_stepthree_stitle','');
+  variable_del('salesguide_stepthree_desc', '');
+
+  $qry = db_select('node', 'n');
+  $qry->condition('n.type', 'salesguide_profiles', '=');
+  $qry->fields('n', ['nid']);
+  $qry->orderBy('n.created', 'ASC');      
+  $results = $qry->execute()->fetchAll();
+  // Delete all nids of content types
+  foreach ($results as $row) {
+    $nids[] = $row->nid;
+  }//end foreach
+  node_delete_multiple( $nids );
+
+  // Delete contents and instances
+  foreach( field_info_instances('node', 'salesguide_profiles') as $field_name => $instance ) {
+    if(field_info_field($field_name)){
+      field_delete_instance($instance);
+    }//end if
+  }//end foreach
+  node_type_delete('salesguide_profiles');
+  
+  // Load taxonomy to delete 
+  $voc_id = taxonomy_vocabulary_machine_name_load('salesguide_icons');
+  taxonomy_vocabulary_delete($voc_id->vid);
+  field_purge_batch(1000);
+}

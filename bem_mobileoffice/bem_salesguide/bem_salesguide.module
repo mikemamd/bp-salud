@@ -1,0 +1,152 @@
+<?php
+/**
+ * @File Redesign Sales Guide
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package 'BP - SALUD | Oficina Móvil'
+ * @info This module contains functions to blocks on Sales Guide
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_salesguide_menu() {
+  $items = [];
+  /* Admin Paths */
+  $items['admin/config/mobile-office/salesguide/config'] = array(
+    'title'            => 'Configuración | Oficina Móvil - Guía de Ventas',
+    'description'      => 'Configuración de bloques en Oficina Móvil | Guía de Ventas',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_salesguide_admin'),
+    'access arguments' => array('mobile office'),
+    'file'             => 'bem_salesguide.admin.inc',
+  );
+  /* Paths */
+  $items['oficina-movil/guia-de-ventas'] = array(
+    'title'            => 'Guía de Ventas',
+    'description'      => 'Oficina Móvil - Guía de Ventas',
+    'page callback'    => 'bem_salesguide_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_salesguide_page_empty() {
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks
+ *   salesguide_header
+ *   salesguide_stepone
+ *   salesguide_steptwo
+ *   salesguide_stepthree
+ */
+function bem_salesguide_block_info() {
+  $blocks = [];
+  $blocks['salesguide_header'] = array(
+    'info'       => 'Oficina Móvil | Guía de Ventas - Header',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/guia-de-ventas',
+    'weight'     => 1,
+  );
+  $blocks['salesguide_stepone'] = array(
+    'info'       => 'Oficina Móvil | Guía de Ventas - Paso 1',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/guia-de-ventas',
+    'weight'     => 2,
+  );
+  $blocks['salesguide_steptwo'] = array(
+    'info'       => 'Oficina Móvil | Guía de Ventas - Paso 2',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/guia-de-ventas',
+    'weight'     => 3,
+  );
+  $blocks['salesguide_stepthree'] = array(
+    'info'       => 'Oficina Móvil | Guía de Ventas - Paso 3',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/guia-de-ventas',
+    'weight'     => 4,
+  );
+
+  return $blocks;
+}
+
+/*
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_salesguide_block_view($delta = '') {
+  $block = [];
+  module_load_include('inc','bem_salesguide','bem_salesguide');
+  drupal_add_css(drupal_get_path('module', 'bem_salesguide') . '/css/salesguide.css');
+  drupal_add_js(drupal_get_path('module', 'bem_salesguide') . '/js/profiles.js', array('scope' => 'footer', 'weight' => 6));
+  switch ($delta) {
+    case 'salesguide_header':
+        $block['content'] = bem_salesguide_getheader();
+      break;
+    case 'salesguide_stepone':
+        $block['content'] = bem_salesguide_stepone();
+      break;
+    case 'salesguide_steptwo':
+        $block['content'] = bem_salesguide_steptwo();
+      break;
+    case 'salesguide_stepthree':
+        $block['content'] = bem_salesguide_stepthree();
+      break;
+  }
+
+  return $block;
+}
+
+/*
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_salesguide_theme() {
+  $theme = [];
+  $theme['salesguide_header']    = [ 'template' => 'templates/block-header' ];
+  $theme['salesguide_stepone']   = [ 'template' => 'templates/block-stepone' ];
+  $theme['salesguide_steptwo']   = [ 'template' => 'templates/block-steptwo' ];
+  $theme['salesguide_stepthree'] = [ 'template' => 'templates/block-stepthree' ];
+
+  return $theme;
+}
+
+/**
+ * Return content to block [salesguide_header]
+ * @return theme array ($content)
+ */
+function bem_salesguide_getheader() {
+  $content = [
+    'title' => variable_get('salesguide_head_title',''),
+    'body'  => variable_get('salesguide_head_body',''),
+    'video' => variable_get('salesguide_head_video', ''),
+    'img_d' => bem_common_getimg(variable_get('salesguide_head_imgd', '')),
+    'img_m' => bem_common_getimg(variable_get('salesguide_head_imgm', '')),
+  ];
+
+  return theme('salesguide_header', array('content' => $content));
+}

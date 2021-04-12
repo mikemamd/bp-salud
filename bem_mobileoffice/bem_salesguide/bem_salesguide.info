@@ -1,0 +1,6 @@
+name = Guía de Ventas.
+description = Módulo de rediseño sección Guía de Ventas.
+package = 'BP - SALUD | Oficina Móvil'
+version = 1.0
+core = 7.x
+configure = admin/config/mobile-office/salesguide/config

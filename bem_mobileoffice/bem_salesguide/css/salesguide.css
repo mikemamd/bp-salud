@@ -1,0 +1,38 @@
+    /* 
+      ##Device = Low Resolution Defautl (Desktop)
+      ##Screen = B/w 1024px
+    */
+    @media (min-width: 1024px) {
+      .owl-nav {
+        display: none !important;
+      }
+    }
+
+    /* 
+      ##Device = Low Resolution Defautl (Laptop)
+      ##Screen = B/w 767px to 1023px
+    */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .owl-nav {
+        display: block !important;
+      }
+    }
+    /* 
+      ##Device = Low Resolution Tablets, Mobiles (Landscape)
+      ##Screen = B/w 481px to 767px
+    */
+    @media (min-width: 481px) and (max-width: 767px) {
+      .owl-nav {
+        display: block;
+      }
+    }
+    /* 
+      ##Device = Most of the Smartphones Mobiles (Portrait)
+      ##Screen = B/w 320px to 479px
+    */
+    @media (min-width: 320px) and (max-width: 480px) {
+      .owl-nav {
+        display: block;
+      }
+    }
+
