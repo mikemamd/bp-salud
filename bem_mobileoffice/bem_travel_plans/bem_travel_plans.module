@@ -1,0 +1,180 @@
+<?php
+/**
+ * @File Redesign Travel Plans
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Oficina Móvil
+ * @info This module contains functions to blocks on Travel Plans
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bem_travel_plans_menu() {
+  $items = [];
+  /* Admin paths */ 
+  $items['admin/config/mobile-office/travel-plans/config'] = array(
+    'title'            => 'Configuración | Oficina Móvil - Planes de Viaje',
+    'description'      => 'Configuración de bloques en Oficina Móvil | Planes de Viaje',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('bem_travel_plans_admin'),
+    'access arguments' => array('mobile office'),
+    'file'             => 'bem_travel_plans.admin.inc',
+  );
+  /* Paths */
+  $items['oficina-movil/planes-de-viaje'] = array(
+    'title'            => 'Planes de Viaje',
+    'description'      => 'Oficina Móvil - Planes de Viaje',
+    'page callback'    => 'bem_travel_plans_page_empty',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * @info Define empty page
+ * @return (string)
+*/
+function bem_travel_plans_page_empty() {
+  return '';
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare blocks to home
+ * @blocks
+ *   bem_travel_header
+ *   bem_travel_intro
+ *   bem_travel_services
+ *   bem_travel_plans
+ *   bem_travel_quote
+ *   bem_travel_materials
+ */
+function bem_travel_plans_block_info() {
+  $blocks = [];
+  $blocks['bem_travel_header'] = array(
+    'info'       => 'Oficina Móvil | Planes de Viaje - Header',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/planes-de-viaje',
+    'weight'     => 1,
+  );
+  $blocks['bem_travel_intro'] = array(
+    'info'       => 'Oficina Móvil | Planes de Viaje - Intro',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/planes-de-viaje',
+    'weight'     => 2,
+  );
+  $blocks['bem_travel_services'] = array(
+    'info'       => 'Oficina Móvil | Planes de Viaje - Servicios',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/planes-de-viaje',
+    'weight'     => 3,
+  );
+  $blocks['bem_travel_plans'] = array(
+    'info'       => 'Oficina Móvil | Planes de Viaje - Planes',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/planes-de-viaje',
+    'weight'     => 4,
+  );
+  $blocks['bem_travel_quote'] = array(
+    'info'       => 'Oficina Móvil | Planes de Viaje - Cotizar',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/planes-de-viaje',
+    'weight'     => 5,
+  );
+  $blocks['bem_travel_materials'] = array(
+    'info'       => 'Oficina Móvil | Planes de Viaje - Descargables',
+    'status'     => TRUE,
+    'region'     => 'content_bp',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages'      => 'oficina-movil/planes-de-viaje',
+    'weight'     => 6,
+  );
+
+  return $blocks;
+}
+
+
+
+/*
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bem_travel_plans_block_view($delta = '') {
+  $block = [];
+  module_load_include('inc','bem_travel_plans','bem_travel_plans');
+  switch ($delta) {
+    case 'bem_travel_header':
+        $block['content'] = bem_travel_plans_getheader();
+      break;
+    case 'bem_travel_intro':
+        $block['content'] = bem_travel_plans_getintro();
+      break;
+    case 'bem_travel_services':
+        $block['content'] = bem_travel_plans_getservices();
+      break;
+    case 'bem_travel_plans':
+        $block['content'] = bem_travel_plans_getplans();
+      break;
+    case 'bem_travel_quote':
+        $block['content'] = bem_travel_plans_getquote();
+      break;
+    case 'bem_travel_materials':
+        $block['content'] = bem_travel_plans_getmaterials();
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bem_travel_plans_theme() {
+  $theme = [];
+  $theme['bem_travel_header']    = [ 'template' => 'templates/block-header' ];
+  $theme['bem_travel_intro']     = [ 'template' => 'templates/block-intro' ];
+  $theme['bem_travel_services']  = [ 'template' => 'templates/block-services' ];
+  $theme['bem_travel_plans']     = [ 'template' => 'templates/block-plans' ];
+  $theme['bem_travel_quote']     = [ 'template' => 'templates/block-quote' ];
+  $theme['bem_travel_materials'] = [ 'template' => 'templates/block-materials' ];
+
+  return $theme;
+}
+
+/**
+ * Return content to block [salesguide_header]
+ * @return theme array ($content)
+ */
+function bem_travel_plans_getheader() {
+  $content = [
+    'title' => variable_get('travel_head_title',''),
+    'body'  => variable_get('travel_head_body',''),
+    'video' => variable_get('travel_head_video', ''),
+    'img_d' => bem_common_getimg(variable_get('travel_head_imgd', '')),
+    'img_m' => bem_common_getimg(variable_get('travel_head_imgm', '')),
+  ];
+
+  return theme('bem_travel_header', array('content' => $content));
+}

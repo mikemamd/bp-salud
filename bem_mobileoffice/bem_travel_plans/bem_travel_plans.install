@@ -1,0 +1,168 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions to "Oficina Movil"
+ * @tmpvariables
+ */
+
+/**
+ * Implements hook_install().
+ * Structure to install cotent types/taxonomies and insert fields
+ * @contenttypes
+ *   travelplans_plans => Content to upload plans
+ *   travelplans_quote => Content to slider on quote 
+ * @taxonomies 
+ */
+function bem_travel_plans_install(){
+  // Create new content_types
+  $content_types = array(
+    'travelplans_plans' => array(
+      'type'          => 'travelplans_plans',
+      'name'          => 'Oficina Móvil | Planes de Viaje - Planes',
+      'description'   => 'Use para cargar contenido de los planes de viaje',
+      'title_label'   => 'Título',
+      'base'          => 'node_content',
+      'custom'        => TRUE,
+    ),
+    'travelplans_quote' => array(
+      'type'          => 'travelplans_quote',
+      'name'          => 'Oficina Móvil | Planes de Viaje - Cotizar',
+      'description'   => 'Use para cargar contenido del bloque de Cotizar',
+      'title_label'   => 'Título',
+      'base'          => 'node_content',
+      'custom'        => TRUE,
+    ),
+  );//end content_types
+  foreach($content_types as $key => $content){
+    $node_type = node_type_set_defaults($content);
+    node_type_save($node_type);
+  }//end foreach
+
+  // Create Fields to contents and taxonomies
+  field_info_cache_clear();
+  // Options to order selector
+  for ($i = 1; $i < 11; $i++) { 
+    $options[$i] = $i; 
+  }
+
+  // Adds instances on contents and taxonomies 
+  $entities = array(
+    // Instances to content type
+    'travelplans_plans' => array(
+      'Description' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'body', 
+        'label'       => 'Body',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_textarea_with_summary'
+        ),
+      ),
+      'Orden' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $options,
+        ),
+      ),
+    ), // End travelplans_plans
+    'travelplans_quote' => array(
+      'Description' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'body', 
+        'label'       => 'Body',
+        'description' => 'Descripción del contenido',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'text_textarea_with_summary'
+        ),
+      ),
+      'File' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_link', 
+        'label'       => 'File',
+        'description' => 'Archivo adjunto del Plan',
+        'type'        => 'link_field',
+        'cardinality' => -1,
+        'required'    => TRUE,
+        'widget'      => array(
+          'type'        => 'link_field',
+          'cardinality' => -1,
+        ),
+      ),
+      'Orden' => array( 
+        'entity_type' => 'node',
+        'field_name'  => 'field_uorder', 
+        'label'       => 'Orden',
+        'description' => 'Seleccione el orden en que aparecerá este contenido',
+        'type'        => 'list_text',
+        'required'    => TRUE,
+        'widget'      => array(
+          'type' => 'options_select'
+        ),
+        'settings' => array(
+          'allowed_values' => $options,
+        ),
+      ),
+
+    ),
+  );
+
+  foreach ($entities as $entity => $instances) {
+    foreach ($instances as $instance) {
+      $instance['bundle'] = $entity;
+      field_create_instance($instance);
+    }//end foreach
+  }//end foreach
+
+}
+
+/**
+ * Implements hook_uninstall().
+ * Delete content types, taxonomies and variables related with the module
+ * @content_types
+ *   travelplans_plans => Content to upload plans
+ *   travelplans_quote => Content to slider on quote 
+ * @taxonomies
+ */
+function bem_travel_plans_uninstall() {
+  $nids = [];
+
+  /* DELETE ADMIN VARIABLES */
+  //variable_del('salesguide_head_title','');
+
+  $qry = db_select('node', 'n');
+  $qry->condition(db_or()
+      ->condition('n.type', 'travelplans_plans', '=')
+      ->condition('n.type', 'travelplans_quote', '='));
+  $qry->fields('n', ['nid']);
+  $qry->orderBy('n.created', 'ASC');      
+  $results = $qry->execute()->fetchAll();
+
+  // Delete all nids of content types
+  foreach ($results as $row) {
+    $nids[] = $row->nid;
+  }//end foreach
+  node_delete_multiple( $nids );
+
+  // Delete contents and instances
+  $contents = [ 'travelplans_plans', 'travelplans_quote' ];
+  foreach($contents as $content){
+    foreach( field_info_instances('node', $content) as $field_name => $instance ) {
+      if(field_info_field($field_name)){
+        field_delete_instance($instance);
+      }//end if
+    }//end foreach
+    node_type_delete( (string) $content);
+  }//end foreach
+
+  field_purge_batch(1000);
+}
