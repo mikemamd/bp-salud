@@ -1,0 +1,167 @@
+<?php
+/**
+ * @File Custom Search
+ * @author Miguel Martínez <miguel01amd@gmail.com>
+ * @package BP - SALUD | Search
+ * @info This module contains functions to custom search
+ * @vertion dev 1.0.0.0
+ */
+
+/**
+ * Define URLS to admin and sections pages
+ * Implements hook_menu().
+ * @return array (paths)
+ */
+function bemsearch_menu() {
+  $items = [];
+  /* Path to clean search */
+  $items['bem-search/clean'] = array(
+    'title'            => 'Clean Search',
+    'description'      => 'Callback to clean params on search',
+    'page callback'    => 'bemsearch_cleankey',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/*
+ * Implements hook_block_info().
+ * Declare block to footer
+ */
+function bemsearch_block_info() {
+  $blocks = [];
+  $blocks['bem_menusearch'] = array(
+    'info'       => 'Main Menu | Search',
+    'status'     => TRUE,
+    'region'     => 'search',
+    'cache'      => DRUPAL_NO_CACHE,
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'weight'     => 1,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ * Callback to block info
+ */
+function bemsearch_block_view($delta = '') {
+  $block = [];
+  switch ($delta) {
+    case 'bem_menusearch':
+      global $base_url;
+      $path['theme']    = $base_url.'/sites/all/themes/zen/bp/new-theme/';
+      $path['action']   = $base_url.'/bem-search/clean';
+      $block['content'] = theme('bem_menusearch', array('path' => $path));
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ * @return array
+ * @see templates
+ */
+function bemsearch_theme() {
+  $theme = [];
+  $theme['bem_menusearch'] = [ 'template' => 'templates/block-search' ];
+  return $theme;
+}
+
+/**
+ * Implements hook_search_info().
+ */
+function bemsearch_search_info() {
+  return array(
+    'title'    => 'BEM',
+    'path'     => 'bem-search',
+  );
+}
+
+/**
+ * Implements hook_search_execute().
+ * Retrive results to search
+ * @return array $results
+ */
+function bemsearch_search_execute($keys = NULL, $condition = NULL) {
+  global $base_url;
+  $content = [];
+
+  $qry = db_select('node', 'n');
+  $qry->leftJoin('field_data_body', 'body', 'body.entity_id = n.nid');
+  $qry->leftJoin('field_data_field_body', 'fbody', 'fbody.entity_id = n.nid');
+  $qry->condition('status', '1', '=');
+  $qry->condition(db_or()
+        ->condition('n.type', 'capacitaciones', '=')
+        ->condition('n.type', 'articulo_conocimiento_industria', '=')
+        ->condition('n.type', 'documentos_de_inter_s_', '=')
+        ->condition('n.type', 'webinars', '=')
+        ->condition('n.type', 'tutoriales', '='));
+  $qry->condition(db_or()
+        ->condition('n.title', '%' . db_like($keys) . '%', 'LIKE')
+        ->condition('body.body_value', '%' . db_like($keys) . '%', 'LIKE')
+        ->condition('fbody.field_body_value', '%' . db_like($keys) . '%', 'LIKE'));
+  $qry->fields('n', ['nid', 'title', 'type'])
+      ->fields('body', ['body_value'])
+      ->fields('fbody', ['field_body_value'])
+      ->orderBy('n.changed', 'DESC')
+      ->extend('PagerDefault')
+      ->limit(10)
+      ->execute();
+
+  $results = $qry->execute()->fetchAll();
+
+  if (!empty($results)) {
+    foreach ($results as $item) {
+      $alias    = drupal_get_path_alias('node/'.$item->nid);
+
+      $content[$item->nid] = [
+        'title' => $item->title,
+        'desc'  => (!empty($item->body_value)) ? $item->body_value : $item->field_body_value,
+        'link'  => $base_url.'/'.$alias,
+      ];
+
+    }//endforeach
+  }//endif
+
+  return $content;
+}
+
+/**
+ * Implements hook_preprocess_search_result().
+ * Retrive the variables to send on tpl
+ * @param $variables (array) native variables on hook
+ * @return $result (array) structure to print on tpl
+ */
+function bemsearch_preprocess_search_result(&$variables) {
+  // Load the variables on result
+  $result = $variables['result'];
+  // Make the custom variables to template
+  $variables['title'] = (isset($result['title'])) ? $result['title'] : '';
+  $variables['desc']  = (isset($result['desc'])) ? substr($result['desc'], 0, 180) : '';
+  $variables['link']  = (isset($result['link'])) ? $result['link'] : '';
+}
+
+/**
+ * Clean string to search and redirect to page results.
+ * @param string ($key) string to clean
+ * @return redirect to page results
+ * @see bemsearch_menu
+ */
+function bemsearch_cleankey() {
+  $string = (string) $_GET['bemsearch'];
+  // Params to clean string
+  $strip = array("~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "_", "=", "+", "[", "{", "]",
+                   "}", "\\", "|", ";", ":", "\"", "'", "&#8216;", "&#8217;", "&#8220;", "&#8221;", "&#8211;", "&#8212;",
+                   "â€”", "â€“", ",", "<", ".", ">", "/", "?");
+  // Clean string
+  $clean = trim(str_replace($strip, "", strip_tags($string)));
+  $clean = empty($clean) ? '~' : $clean;
+  // Generate redirect
+  $extra = 'search/bem-search/' . $clean;
+  $host  = $_SERVER['HTTP_HOST'];
+  header("Location: https://$host/$extra");
+}

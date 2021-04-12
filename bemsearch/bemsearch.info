@@ -1,0 +1,5 @@
+name = Buscador BEM
+description = Módulo de buscador personalizado BEM.
+package = 'BP - SALUD | Search'
+version = 1.0
+core = 7.x
